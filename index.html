@@ -836,8 +836,7 @@ function renderPane2() {
     types_ts.forEach(t => {
       const key = m + '|' + t;
       if (typeMonthMap[key]) {
-        tsLabels.push(mName + '
-' + t);
+        tsLabels.push([mName, t]);
         tsKeys.push(key);
       }
     });
