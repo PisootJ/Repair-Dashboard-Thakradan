@@ -811,17 +811,38 @@ function renderPane2() {
     options: { responsive: true, indexAxis:'y', plugins: { legend:{display:false} }, scales: { x:{ ticks:{...TICK, stepSize:1}, beginAtZero:true } } }
   });
 
-  // Chart: Success rate by type (grouped bar)
-  const typeSuccessMap = {};
+  // Chart: Success rate by type × month (X-axis = month-type combo)
+  const MONTH_NAMES = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  const typeMonthMap = {}; // key: "mKey|type"
+  const months_ts = [...new Set(allData.map(d => d.mKey).filter(Boolean))].sort();
+  const types_ts  = ['ไม่ใช่ครุภัณฑ์', 'ครุภัณฑ์'];
   allData.forEach(d => {
+    if (!d.mKey) return;
     const t = (d['เรื่องแจ้งซ่อม']||'อื่นๆ').includes('ไม่ใช่') ? 'ไม่ใช่ครุภัณฑ์' : 'ครุภัณฑ์';
-    if (!typeSuccessMap[t]) typeSuccessMap[t] = { done:0, inprog:0, esc:0, total:0 };
-    typeSuccessMap[t].total++;
-    if (d.status === 'ดำเนินการแก้ไขแล้ว') typeSuccessMap[t].done++;
-    else if (d.status === 'กำลังดำเนินการ')  typeSuccessMap[t].inprog++;
-    else if (d.status.includes('ส่งเรื่องต่อ')) typeSuccessMap[t].esc++;
+    const key = d.mKey + '|' + t;
+    if (!typeMonthMap[key]) typeMonthMap[key] = { done:0, inprog:0, esc:0, total:0 };
+    typeMonthMap[key].total++;
+    if (d.status === 'ดำเนินการแก้ไขแล้ว') typeMonthMap[key].done++;
+    else if (d.status === 'กำลังดำเนินการ')  typeMonthMap[key].inprog++;
+    else if (d.status.includes('ส่งเรื่องต่อ')) typeMonthMap[key].esc++;
   });
-  const tsLabels = Object.keys(typeSuccessMap);
+
+  // Build labels: "เม.ย. - ไม่ใช่ครุภัณฑ์", "เม.ย. - ครุภัณฑ์", ...
+  const tsLabels = [];
+  const tsKeys   = [];
+  months_ts.forEach(m => {
+    const [yr, mo] = m.split('-');
+    const mName = MONTH_NAMES[+mo - 1] + ' ' + (+yr + 543 - 2500 + 2500).toString().slice(-2);
+    types_ts.forEach(t => {
+      const key = m + '|' + t;
+      if (typeMonthMap[key]) {
+        tsLabels.push(mName + '
+' + t);
+        tsKeys.push(key);
+      }
+    });
+  });
+
   destroyChart('cTypeSuccess');
   chartInstances['cTypeSuccess'] = new Chart(document.getElementById('cTypeSuccess'), {
     type: 'bar',
@@ -830,20 +851,20 @@ function renderPane2() {
       datasets: [
         {
           label: 'แก้ไขแล้ว (%)',
-          data: tsLabels.map(t => typeSuccessMap[t].total > 0
-            ? +(typeSuccessMap[t].done / typeSuccessMap[t].total * 100).toFixed(1) : 0),
+          data: tsKeys.map(k => typeMonthMap[k]?.total > 0
+            ? +(typeMonthMap[k].done / typeMonthMap[k].total * 100).toFixed(1) : 0),
           backgroundColor: '#a8d8a8', borderRadius: 6,
         },
         {
           label: 'กำลังดำเนินการ (%)',
-          data: tsLabels.map(t => typeSuccessMap[t].total > 0
-            ? +(typeSuccessMap[t].inprog / typeSuccessMap[t].total * 100).toFixed(1) : 0),
+          data: tsKeys.map(k => typeMonthMap[k]?.total > 0
+            ? +(typeMonthMap[k].inprog / typeMonthMap[k].total * 100).toFixed(1) : 0),
           backgroundColor: '#ffd08a', borderRadius: 6,
         },
         {
           label: 'ส่งเรื่องต่อ (%)',
-          data: tsLabels.map(t => typeSuccessMap[t].total > 0
-            ? +(typeSuccessMap[t].esc / typeSuccessMap[t].total * 100).toFixed(1) : 0),
+          data: tsKeys.map(k => typeMonthMap[k]?.total > 0
+            ? +(typeMonthMap[k].esc / typeMonthMap[k].total * 100).toFixed(1) : 0),
           backgroundColor: '#f4a0a0', borderRadius: 6,
         },
       ]
@@ -856,15 +877,15 @@ function renderPane2() {
         tooltip: {
           callbacks: {
             afterBody: (items) => {
-              const t = items[0]?.label;
-              if (!t || !typeSuccessMap[t]) return '';
-              return `รวมทั้งหมด: ${typeSuccessMap[t].total} รายการ`;
+              const k = tsKeys[items[0]?.dataIndex];
+              if (!k || !typeMonthMap[k]) return '';
+              return 'รวม: ' + typeMonthMap[k].total + ' รายการ';
             }
           }
         }
       },
       scales: {
-        x: { ticks: TICK },
+        x: { ticks: { ...TICK, maxRotation: 0 } },
         y: {
           min: 0, max: 100,
           ticks: { ...TICK, callback: v => v + '%' },
