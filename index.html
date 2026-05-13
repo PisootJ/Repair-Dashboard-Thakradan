@@ -785,7 +785,7 @@ function renderPane2() {
     options: { responsive: true, plugins: { legend: { labels: { font:{size:10} } } } }
   });
 
-  // Chart: Avg days — dynamic by stage dropdown
+  // Chart: Avg days — store data globally for dropdown access
   const STAGE_CONFIG = {
     s1:    { label: 'ช่างภายในประเมิน (แจ้ง → ตรวจสอบ/แก้ไข)',    color: '#90c2e7', key: 's1' },
     s2:    { label: 'ติดต่อช่างนอก (ตรวจสอบ → ติดต่อช่างนอก)',     color: '#ce93d8', key: 's2' },
@@ -793,37 +793,8 @@ function renderPane2() {
     s4:    { label: 'ช่างนอกดำเนินการเสร็จ (เริ่มงาน → เสร็จ)',     color: '#a8d8a8', key: 's4' },
     total: { label: 'รวมทั้งหมด (แจ้ง → เสร็จ)',                   color: '#f4a0a0', key: 'daysArr' },
   };
-
-  function renderAvgDaysChart() {
-    const sel   = document.getElementById('avgStageSelect')?.value || 's1';
-    const cfg   = STAGE_CONFIG[sel];
-    const data  = months.map(k => avg(mMap[k][cfg.key]));
-    destroyChart('cAvgDays');
-    chartInstances['cAvgDays'] = new Chart(document.getElementById('cAvgDays'), {
-      type: 'bar',
-      data: {
-        labels,
-        datasets: [{
-          label: cfg.label,
-          data,
-          backgroundColor: cfg.color,
-          borderRadius: 7,
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { display: false },
-          topLabel: { display: true, suffix: ' วัน', fontSize: 12, offset: 5, skipZero: true },
-          tooltip: { callbacks: { label: item => item.raw !== null ? item.raw + ' วัน' : 'ไม่มีข้อมูล' } }
-        },
-        scales: {
-          x: { ticks: TICK },
-          y: { beginAtZero: true, ticks: { ...TICK, callback: v => v + ' วัน' }, title: { display: true, text: 'วันเฉลี่ย', font:{size:10} } }
-        }
-      }
-    });
-  }
+  // Store in global so dropdown onchange can access
+  window._avgDays = { mMap, months, labels, STAGE_CONFIG, TICK };
   renderAvgDaysChart();
 
   // Chart: Type bar
@@ -1199,6 +1170,59 @@ async function loadData() {
 }
 
 loadData();
+
+/* ====== GLOBAL: avg days chart — called by dropdown onchange ====== */
+function renderAvgDaysChart() {
+  const d = window._avgDays;
+  if (!d) return;
+  const { mMap, months, labels, STAGE_CONFIG, TICK } = d;
+  const sel = document.getElementById('avgStageSelect')?.value || 's1';
+  const cfg = STAGE_CONFIG[sel];
+  const data = months.map(k => {
+    const arr = mMap[k] ? mMap[k][cfg.key] : [];
+    return avg(arr);
+  });
+  const hasData = data.some(v => v !== null && v !== undefined);
+  destroyChart('cAvgDays');
+  if (!hasData) {
+    // Show "no data" message inside chart area
+    const canvas = document.getElementById('cAvgDays');
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      canvas.height = 120;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.font = '13px sans-serif';
+      ctx.fillStyle = '#aaa';
+      ctx.textAlign = 'center';
+      ctx.fillText('ไม่มีข้อมูลสำหรับขั้นตอนนี้ (วันที่ยังไม่ได้กรอก)', canvas.width/2, 60);
+    }
+    return;
+  }
+  chartInstances['cAvgDays'] = new Chart(document.getElementById('cAvgDays'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: cfg.label,
+        data,
+        backgroundColor: cfg.color,
+        borderRadius: 7,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        topLabel: { display: true, suffix: ' วัน', fontSize: 12, offset: 5, skipZero: false },
+        tooltip: { callbacks: { label: item => item.raw !== null ? item.raw + ' วัน' : 'ยังไม่มีข้อมูล' } }
+      },
+      scales: {
+        x: { ticks: TICK },
+        y: { beginAtZero: true, ticks: { ...TICK, callback: v => v + ' วัน' }, title: { display: true, text: 'วันเฉลี่ย', font:{size:10} } }
+      }
+    }
+  });
+}
 </script>
 </body>
 </html>
