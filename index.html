@@ -1032,22 +1032,23 @@ async function loadData() {
     /* ====== MODE B: standalone / GitHub Pages → fetch CSV directly ====== */
     } else {
       document.getElementById('lastUpdate').textContent = 'กำลังโหลดจาก Google Sheets...';
-      let resp;
-      try {
-        resp = await fetch(CSV_URL);
-      } catch (fe) {
-        throw new Error('ดึงข้อมูลไม่ได้ — กรุณาแชร์ Google Sheet เป็น "ทุกคนที่มีลิงก์ (Viewer)" ก่อนครับ');
-      }
-      if (!resp.ok) {
-        throw new Error(`HTTP ${resp.status} — กรุณาแชร์ Google Sheet เป็น "ทุกคนที่มีลิงก์ (Viewer)"`);
-      }
-      const csvText = await resp.text();
-      rows = parseCSV(csvText);
-      if (!rows.length) throw new Error('ไม่พบข้อมูลใน Google Sheet');
-    }
 
-    allData = processData(rows);
-    populateDropdowns();
+      // Try multiple URL formats (CORS support varies by sheet publish state)
+      const urlsToTry = [
+        // 1. Publish-to-web URL (most CORS-friendly)
+        `https://docs.google.com/spreadsheets/d/${FILE_ID}/pub?output=csv&gid=0`,
+        // 2. gviz endpoint (CORS-friendly for public sheets)
+        `https://docs.google.com/spreadsheets/d/${FILE_ID}/gviz/tq?tqx=out:csv`,
+        // 3. Standard export
+        `https://docs.google.com/spreadsheets/d/${FILE_ID}/export?format=csv&gid=0`,
+      ];
 
-    const now = new Date().toLocaleString('th-TH', { dateStyle:'short', timeStyle:'short' });
-    document.getE
+      let lastErr = '';
+      for (const url of urlsToTry) {
+        try {
+          const resp = await fetch(url);
+          if (!resp.ok) { lastErr = `HTTP ${resp.status}`; continue; }
+          const txt = await resp.text();
+          if (txt && txt.length > 20) {
+            rows = parseCSV(txt);
+            if (rows.length) { conso
