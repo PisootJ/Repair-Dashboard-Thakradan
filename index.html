@@ -1053,4 +1053,89 @@ async function loadData() {
           }
         } catch (e1) { console.warn('B1a fetch failed:', e1.message); }
 
-        /* B1b: JSONP fallback (เมื่อ CORS บล็อก 
+        /* B1b: JSONP fallback (เมื่อ CORS บล็อก JSON) */
+        if (!rows.length) {
+          console.log('Trying JSONP...');
+          rows = await new Promise(resolve => {
+            const cb = '_cb' + Date.now();
+            const s  = document.createElement('script');
+            let done = false;
+            window[cb] = d => {
+              done = true;
+              delete window[cb];
+              s.remove();
+              resolve((d && d.rows) ? d.rows : []);
+            };
+            s.onerror = () => { if (!done) { delete window[cb]; s.remove(); resolve([]); } };
+            s.src = APPS_SCRIPT_URL + '?callback=' + cb;
+            setTimeout(() => { if (!done) { delete window[cb]; s.remove(); resolve([]); } }, 10000);
+            document.head.appendChild(s);
+          });
+          console.log('JSONP rows:', rows.length);
+        }
+      }
+
+      /* -- B2: Google Sheets direct CSV (fallback / ถ้ายังไม่มี Apps Script) -- */
+      if (!rows.length) {
+        const csvUrls = [
+          `https://docs.google.com/spreadsheets/d/${FILE_ID}/pub?output=csv`,
+          `https://docs.google.com/spreadsheets/d/${FILE_ID}/gviz/tq?tqx=out:csv`,
+        ];
+        for (const url of csvUrls) {
+          try {
+            const r = await fetch(url);
+            if (!r.ok) continue;
+            const txt = await r.text();
+            if (txt && txt.length > 30 && !txt.includes('<html')) {
+              rows = parseCSV(txt);
+              if (rows.length) { console.log('Loaded CSV from:', url); break; }
+            }
+          } catch {}
+        }
+      }
+
+      /* -- ยังไม่มีข้อมูล → แสดงคำแนะนำ -- */
+      if (!rows.length) {
+        document.getElementById('kpiArea').innerHTML = `
+          <div style="grid-column:1/-1;background:#fff8e1;border:2px solid #ffd08a;border-radius:14px;padding:22px 26px;font-size:13px;line-height:2">
+            <div style="font-size:16px;font-weight:800;color:#b86a00;margin-bottom:8px">⚙️ ต้องตั้งค่า Google Apps Script ก่อน</div>
+            <b>ขั้นตอน (ทำครั้งเดียว ~5 นาที):</b>
+            <ol style="margin:6px 0 0;padding-left:22px;color:#555">
+              <li>เปิด Google Sheet → เมนู <b>Extensions → Apps Script</b></li>
+              <li>ลบโค้ดเดิมทั้งหมด วางโค้ดจากไฟล์ <b>apps_script.gs</b> แทน</li>
+              <li>กด <b>Deploy → New deployment → Web App</b></li>
+              <li>Execute as: <b>Me</b> &nbsp;|&nbsp; Who has access: <b>Anyone</b></li>
+              <li>กด <b>Deploy</b> → Copy URL ที่ได้</li>
+              <li>เปิดไฟล์ <b>index.html</b> ใน GitHub → แก้บรรทัด <code>const APPS_SCRIPT_URL = ''</code> ใส่ URL นั้น</li>
+              <li>Commit → รีเฟรชหน้านี้</li>
+            </ol>
+          </div>`;
+        document.getElementById('daysArea').innerHTML = '';
+        document.getElementById('monthSummaryBody').innerHTML = '<tr><td colspan="7" style="text-align:center;color:#bbb;padding:14px">รอการตั้งค่า</td></tr>';
+        document.getElementById('mainTbody').innerHTML = '<tr><td colspan="9" style="text-align:center;color:#bbb;padding:14px">รอการตั้งค่า</td></tr>';
+        document.getElementById('lastUpdate').textContent = '⚙️ ต้องตั้งค่า Apps Script';
+        return;
+      }
+    }
+
+    allData = processData(rows);
+    populateDropdowns();
+
+    const now = new Date().toLocaleString('th-TH', { dateStyle:'short', timeStyle:'short' });
+    document.getElementById('lastUpdate').textContent =
+      `อัปเดตล่าสุด: ${now} • ทั้งหมด ${allData.length} รายการ`;
+
+    renderMonthSummary();
+    renderPane0();
+    renderPane1();
+
+  } catch (err) {
+    console.error('loadData error:', err);
+    setErr(`⚠️ ${err.message}`);
+  }
+}
+
+loadData();
+</script>
+</body>
+</html>
