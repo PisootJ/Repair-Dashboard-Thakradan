@@ -821,51 +821,62 @@ function renderPane2() {
   const MONTH_NAMES = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
   const months_ts = [...new Set(allData.map(d => d.mKey).filter(Boolean))].sort();
 
-  function buildTypeChart(canvasId, typeFilter, color) {
+  function buildTypeChart(canvasId, typeFilter, barColor) {
     const map = {};
+    // total per type (denominator) = all items of that type across all months
+    let grandTotal = 0;
     allData.forEach(d => {
       if (!d.mKey) return;
       const isNon = (d['เรื่องแจ้งซ่อม']||'').includes('ไม่ใช่');
       if (typeFilter === 'non' && !isNon) return;
       if (typeFilter === 'med' && isNon) return;
-      if (!map[d.mKey]) map[d.mKey] = { done:0, inprog:0, esc:0, total:0 };
+      if (!map[d.mKey]) map[d.mKey] = { done:0, total:0 };
       map[d.mKey].total++;
+      grandTotal++;
       if (d.status === 'ดำเนินการแก้ไขแล้ว') map[d.mKey].done++;
-      else if (d.status === 'กำลังดำเนินการ')  map[d.mKey].inprog++;
-      else if (d.status.includes('ส่งเรื่องต่อ')) map[d.mKey].esc++;
     });
     const mKeys   = months_ts.filter(m => map[m]);
     const mLabels = mKeys.map(m => {
       const [yr, mo] = m.split('-');
       return MONTH_NAMES[+mo-1] + ' ' + (+yr+543).toString().slice(-2);
     });
+    // success rate = done / total (per month)
+    const rates = mKeys.map(k => map[k].total>0 ? +(map[k].done/map[k].total*100).toFixed(1) : 0);
     destroyChart(canvasId);
     chartInstances[canvasId] = new Chart(document.getElementById(canvasId), {
       type: 'bar',
       data: {
         labels: mLabels,
-        datasets: [
-          { label: 'แก้ไขแล้ว (%)',      data: mKeys.map(k => map[k].total>0 ? +(map[k].done/map[k].total*100).toFixed(1):0),   backgroundColor: '#a8d8a8', borderRadius:6 },
-          { label: 'กำลังดำเนินการ (%)', data: mKeys.map(k => map[k].total>0 ? +(map[k].inprog/map[k].total*100).toFixed(1):0), backgroundColor: '#ffd08a', borderRadius:6 },
-          { label: 'ส่งเรื่องต่อ (%)',   data: mKeys.map(k => map[k].total>0 ? +(map[k].esc/map[k].total*100).toFixed(1):0),    backgroundColor: '#f4a0a0', borderRadius:6 },
-        ]
+        datasets: [{
+          label: 'อัตราความสำเร็จ (%)',
+          data: rates,
+          backgroundColor: barColor,
+          borderRadius: 8,
+        }]
       },
       options: {
         responsive: true,
         plugins: {
-          legend: { labels: { font:{size:10} } },
-          topLabel: { display:true, suffix:'%', fontSize:10, offset:4, useDatasetColor:true, skipZero:true },
-          tooltip: { callbacks: { afterBody: items => { const k=mKeys[items[0]?.dataIndex]; return k&&map[k] ? 'รวม: '+map[k].total+' รายการ' : ''; } } }
+          legend: { display: false },
+          topLabel: { display:true, suffix:'%', fontSize:12, offset:5, skipZero:false },
+          tooltip: {
+            callbacks: {
+              label: items => {
+                const k = mKeys[items.dataIndex];
+                return 'สำเร็จ ' + (map[k]?.done||0) + ' / ' + (map[k]?.total||0) + ' รายการ (' + items.raw + '%)';
+              }
+            }
+          }
         },
         scales: {
           x: { ticks: { ...TICK, maxRotation:0 } },
-          y: { min:0, max:100, ticks:{ ...TICK, callback: v=>v+'%' }, title:{ display:true, text:'อัตรา (%)', font:{size:10} } }
+          y: { min:0, max:100, ticks:{ ...TICK, callback: v=>v+'%' }, title:{ display:true, text:'อัตราความสำเร็จ (%)', font:{size:10} } }
         }
       }
     });
   }
-  buildTypeChart('cTypeSuccess1', 'non', '#5b8dee');
-  buildTypeChart('cTypeSuccess2', 'med', '#e8a87c');
+  buildTypeChart('cTypeSuccess1', 'non', '#a8c8f0');
+  buildTypeChart('cTypeSuccess2', 'med', '#f0c8a0');
 
   // Chart: Dept top bar
   const deptMap = {};
