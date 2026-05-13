@@ -981,6 +981,7 @@ function parseCSV(csv) {
 /* =================== MAIN LOAD =================== */
 async function loadData() {
   const FILE_ID = '1JrVY0MHVRq4eAyi-fjKQVRW7LCz8v2vJlQpwm41Iy6E';
+  const CSV_URL = `https://docs.google.com/spreadsheets/d/${FILE_ID}/export?format=csv&gid=0`;
 
   const setErr = msg => {
     document.getElementById('lastUpdate').textContent = msg;
@@ -988,80 +989,65 @@ async function loadData() {
     document.getElementById('escalateArea').innerHTML = `<div class="empty-msg">${msg}</div>`;
   };
 
+  const isCowork = typeof window.cowork !== 'undefined' &&
+                   typeof window.cowork.callMcpTool === 'function';
+
   try {
-    document.getElementById('lastUpdate').textContent = 'กำลังโหลดจาก Google Drive...';
-
-    /* --- Attempt 1: read_file_content (markdown table) --- */
     let rows = [];
-    let debugInfo = '';
-    try {
-      const res1 = await window.cowork.callMcpTool(
-        'mcp__2ab58198-5cf1-41c3-ad51-21c43099d588__read_file_content',
-        { fileId: FILE_ID }
-      );
-      debugInfo = 'type:' + typeof res1 + ' | ' + JSON.stringify(res1).slice(0, 200);
-      console.log('read_file_content raw:', debugInfo);
-      const text1 = extractText(res1);
-      console.log('extracted text1 (first 200):', text1.slice(0, 200));
-      if (text1 && text1.includes('|')) {
-        rows = parseMarkdown(text1);
-        console.log('Parsed from markdown:', rows.length, 'rows');
-      } else if (text1 && text1.includes(',')) {
-        rows = parseCSV(text1);
-        console.log('Parsed as CSV:', rows.length, 'rows');
-      }
-    } catch (e1) {
-      debugInfo += ' | err:' + e1.message;
-      console.warn('read_file_content failed:', e1.message);
-    }
 
-    /* --- Attempt 2: download_file_content as CSV (if Attempt 1 gave nothing) --- */
-    if (!rows.length) {
-      console.log('Trying download_file_content as CSV...');
+    /* ====== MODE A: inside Cowork app → use MCP ====== */
+    if (isCowork) {
+      document.getElementById('lastUpdate').textContent = 'กำลังโหลดจาก Google Drive (Cowork)...';
+      let debugInfo = '';
+
       try {
-        const res2 = await window.cowork.callMcpTool(
-          'mcp__2ab58198-5cf1-41c3-ad51-21c43099d588__download_file_content',
-          { fileId: FILE_ID, exportMimeType: 'text/csv' }
+        const res1 = await window.cowork.callMcpTool(
+          'mcp__2ab58198-5cf1-41c3-ad51-21c43099d588__read_file_content',
+          { fileId: FILE_ID }
         );
-        debugInfo += ' | dl:' + JSON.stringify(res2).slice(0, 150);
-        console.log('download_file_content raw:', JSON.stringify(res2).slice(0, 300));
-        const raw2 = extractText(res2);
-        let csvText = '';
-        try { csvText = atob(raw2); } catch { csvText = raw2; }
-        if (csvText && csvText.length > 10) {
-          rows = parseCSV(csvText);
-          console.log('Parsed from CSV download:', rows.length, 'rows');
-        }
-      } catch (e2) {
-        debugInfo += ' | dl_err:' + e2.message;
-        console.warn('download_file_content failed:', e2.message);
-      }
-    }
+        debugInfo = 'type:' + typeof res1 + ' | ' + JSON.stringify(res1).slice(0, 200);
+        const text1 = extractText(res1);
+        if (text1 && text1.includes('|')) rows = parseMarkdown(text1);
+        else if (text1 && text1.includes(',')) rows = parseCSV(text1);
+      } catch (e1) { debugInfo += ' | err:' + e1.message; }
 
-    if (!rows.length) {
-      throw new Error(
-        'ไม่สามารถดึงข้อมูลได้ — กรุณากดปุ่ม Reload 🔄 อีกครั้ง\n[debug: ' + debugInfo.slice(0, 180) + ']'
-      );
+      if (!rows.length) {
+        try {
+          const res2 = await window.cowork.callMcpTool(
+            'mcp__2ab58198-5cf1-41c3-ad51-21c43099d588__download_file_content',
+            { fileId: FILE_ID, exportMimeType: 'text/csv' }
+          );
+          debugInfo += ' | dl:' + JSON.stringify(res2).slice(0, 100);
+          const raw2 = extractText(res2);
+          let csvText = '';
+          try { csvText = atob(raw2); } catch { csvText = raw2; }
+          if (csvText && csvText.length > 10) rows = parseCSV(csvText);
+        } catch (e2) { debugInfo += ' | dl_err:' + e2.message; }
+      }
+
+      if (!rows.length) {
+        throw new Error('ไม่สามารถดึงข้อมูลได้ — Reload อีกครั้ง [' + debugInfo.slice(0, 150) + ']');
+      }
+
+    /* ====== MODE B: standalone / GitHub Pages → fetch CSV directly ====== */
+    } else {
+      document.getElementById('lastUpdate').textContent = 'กำลังโหลดจาก Google Sheets...';
+      let resp;
+      try {
+        resp = await fetch(CSV_URL);
+      } catch (fe) {
+        throw new Error('ดึงข้อมูลไม่ได้ — กรุณาแชร์ Google Sheet เป็น "ทุกคนที่มีลิงก์ (Viewer)" ก่อนครับ');
+      }
+      if (!resp.ok) {
+        throw new Error(`HTTP ${resp.status} — กรุณาแชร์ Google Sheet เป็น "ทุกคนที่มีลิงก์ (Viewer)"`);
+      }
+      const csvText = await resp.text();
+      rows = parseCSV(csvText);
+      if (!rows.length) throw new Error('ไม่พบข้อมูลใน Google Sheet');
     }
 
     allData = processData(rows);
     populateDropdowns();
 
     const now = new Date().toLocaleString('th-TH', { dateStyle:'short', timeStyle:'short' });
-    document.getElementById('lastUpdate').textContent =
-      `อัปเดตล่าสุด: ${now} • ทั้งหมด ${allData.length} รายการ`;
-
-    renderMonthSummary();
-    renderPane0();
-    renderPane1();
-
-  } catch (err) {
-    console.error('loadData error:', err);
-    setErr(`⚠️ ${err.message}`);
-  }
-}
-
-loadData();
-</script>
-</body>
-</html>
+    document.getE
