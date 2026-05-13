@@ -365,9 +365,26 @@ function showTab(idx) {
 /* =================== DATE UTILITIES =================== */
 function parseDate(s) {
   if (!s || !s.trim()) return null;
-  const p = s.trim().split('/');
-  if (p.length === 3) return new Date(+p[2], +p[0] - 1, +p[1]);
-  return null;
+  const str = s.trim().split(' ')[0]; // strip time part e.g. "5/13/2026 10:30:00"
+  const p = str.split('/');
+  if (p.length === 3) {
+    let a = +p[0], b = +p[1], c = +p[2];
+    // Convert Buddhist Era to CE (Thai year > 2500)
+    if (c > 2500) c -= 543;
+    if (a > 2500) a -= 543; // year in first position
+    // Detect D/M/YYYY (Thai style: first number > 12 must be day)
+    let month, day, year;
+    if (a > 31) { year = a; month = b; day = c; }       // YYYY/M/D
+    else if (c > 31 || c === 0) return null;             // bad year
+    else if (a > 12) { day = a; month = b; year = c; }  // D/M/YYYY
+    else { month = a; day = b; year = c; }               // M/D/YYYY (Apps Script default)
+    if (year < 100) year += 2000;
+    const d = new Date(year, month - 1, day);
+    return isNaN(d) ? null : d;
+  }
+  // Try ISO or other formats
+  const d = new Date(str);
+  return isNaN(d) ? null : d;
 }
 function daysBetween(a, b) {
   if (!a || !b) return null;
@@ -980,7 +997,7 @@ function parseCSV(csv) {
 
 /* =================== CONFIG =================== */
 // หลังติดตั้ง Google Apps Script แล้ว วาง URL ที่นี่:
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby5v4SycWLtXTd7gTqCeANpYLfsB8qexydQQS2M-0LY1CctLWeTnv12PTBbalQKuI4/exec';
+const APPS_SCRIPT_URL = '';
 // ตัวอย่าง: 'https://script.google.com/macros/s/AKfy.../exec'
 
 /* =================== MAIN LOAD =================== */
@@ -1118,6 +1135,11 @@ async function loadData() {
       }
     }
 
+    // Debug: log first row keys to console
+    if (rows.length > 0) {
+      console.log('[DEBUG] First row keys:', Object.keys(rows[0]));
+      console.log('[DEBUG] First row sample:', JSON.stringify(rows[0]).slice(0, 500));
+    }
     allData = processData(rows);
     populateDropdowns();
 
