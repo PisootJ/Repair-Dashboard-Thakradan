@@ -280,11 +280,11 @@ tbody tr:hover { background: #f8faff; }
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
       <h3 style="margin:0">⏱ เวลาเฉลี่ยในการแก้ไข (วัน) รายเดือน</h3>
       <select id="avgStageSelect" onchange="renderAvgDaysChart()" style="padding:6px 12px;border-radius:8px;border:1.5px solid #d0daf0;font-size:13px;color:#444;background:#f8faff;cursor:pointer">
-        <option value="s1">ช่างภายในประเมิน (แจ้ง → ตรวจสอบ/แก้ไข)</option>
-        <option value="s2">ติดต่อช่างนอก (ตรวจสอบ → ติดต่อช่างนอก)</option>
-        <option value="s3">ช่างนอกดำเนินการ (ติดต่อ → เริ่มงาน)</option>
-        <option value="s4">ช่างนอกดำเนินการเสร็จ (เริ่มงาน → เสร็จ)</option>
-        <option value="total">รวมทั้งหมด (แจ้ง → เสร็จ)</option>
+        <option value="s1">ช่างภายในประเมิน — วันแจ้งซ่อม → วันที่ช่างประเมิน</option>
+        <option value="s2">ติดต่อช่างนอก — วันประเมิน → วันที่ติดต่อช่างนอก</option>
+        <option value="s3">ช่างนอกดำเนินการ — วันติดต่อ → วันที่ช่างนอกดำเนินการ</option>
+        <option value="s4">ช่างนอกดำเนินการเสร็จ — วันดำเนินการ → วันที่เสร็จ</option>
+        <option value="total">รวมทั้งหมด — วันแจ้งซ่อม → วันที่เสร็จ</option>
       </select>
     </div>
     <canvas id="cAvgDays"></canvas>
@@ -461,10 +461,14 @@ function processData(rows) {
   return rows.map((r, idx) => {
     // Try multiple column name variations for each date field
     const reportDate  = parseDate(findCol(r, 'วันที่แจ้งซ่อม', 'Timestamp', 'วันที่แจ้ง', 'วันที่'));
-    const resolveDate = parseDate(findCol(r, 'วันที่ได้รับการแก้ไข', 'วันที่แก้ไข', 'วันที่เสร็จ'));
-    const contactDate = parseDate(findCol(r, 'วันที่ติดต่อช่างนอก', 'วันที่ติดต่อ'));
-    const workDate    = parseDate(findCol(r, 'วันที่ช่างดำเนินการ', 'วันที่ดำเนินการ'));
-    const doneDate    = parseDate(findCol(r, 'วันที่ดำเนินการเสร็จ', 'วันที่เสร็จ', 'วันที่เสร็จสิ้น'));
+    // resolveDate = วันที่ช่างภายในประเมิน (= วันที่ได้รับการแก้ไข หรือแก้ไขไม่ได้...)
+    const resolveDate = parseDate(findCol(r, 'วันที่ได้รับการแก้ไข', 'ประเมิน', 'วันที่แก้ไข'));
+    // contactDate = วันที่ติดต่อช่างนอก
+    const contactDate = parseDate(findCol(r, 'วันที่ติดต่อช่างนอก', 'ติดต่อช่างนอก'));
+    // workDate = วันที่ช่างนอกดำเนินการ
+    const workDate    = parseDate(findCol(r, 'วันที่ช่างดำเนินการ', 'ช่างนอกดำเนินการ', 'วันที่ดำเนินการ'));
+    // doneDate = วันที่ช่างนอกดำเนินการเสร็จ
+    const doneDate    = parseDate(findCol(r, 'วันที่ดำเนินการเสร็จ', 'ดำเนินการเสร็จ'));
     const status      = (r['สถานะ'] || '').trim();
 
     let totalDays = null;
@@ -787,11 +791,11 @@ function renderPane2() {
 
   // Chart: Avg days — store data globally for dropdown access
   const STAGE_CONFIG = {
-    s1:    { label: 'ช่างภายในประเมิน (แจ้ง → ตรวจสอบ/แก้ไข)',    color: '#90c2e7', key: 's1' },
-    s2:    { label: 'ติดต่อช่างนอก (ตรวจสอบ → ติดต่อช่างนอก)',     color: '#ce93d8', key: 's2' },
-    s3:    { label: 'ช่างนอกดำเนินการ (ติดต่อ → เริ่มงาน)',         color: '#ffd08a', key: 's3' },
-    s4:    { label: 'ช่างนอกดำเนินการเสร็จ (เริ่มงาน → เสร็จ)',     color: '#a8d8a8', key: 's4' },
-    total: { label: 'รวมทั้งหมด (แจ้ง → เสร็จ)',                   color: '#f4a0a0', key: 'daysArr' },
+    s1:    { label: 'วันที่ช่างภายในประเมิน (แจ้งซ่อม → ประเมิน)',           color: '#90c2e7', key: 's1' },
+    s2:    { label: 'วันที่ติดต่อช่างนอก (ประเมิน → ติดต่อช่างนอก)',          color: '#ce93d8', key: 's2' },
+    s3:    { label: 'วันที่ช่างนอกดำเนินการ (ติดต่อช่างนอก → ดำเนินการ)',    color: '#ffd08a', key: 's3' },
+    s4:    { label: 'วันที่ช่างนอกดำเนินการเสร็จ (ดำเนินการ → เสร็จ)',       color: '#a8d8a8', key: 's4' },
+    total: { label: 'รวมทั้งหมด (แจ้งซ่อม → เสร็จ)',                        color: '#f4a0a0', key: 'daysArr' },
   };
   // Store in global so dropdown onchange can access
   window._avgDays = { mMap, months, labels, STAGE_CONFIG, TICK };
