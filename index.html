@@ -727,9 +727,12 @@ function destroyChart(id) {
 }
 
 function renderPane2() {
-  // Build month map
+  // Exclude กำลังดำเนินการ from statistics (rule: show in ภาพรวม only)
+  const statData = allData.filter(d => d.status !== 'กำลังดำเนินการ');
+
+  // Build month map (statData only)
   const mMap = {};
-  allData.forEach(d => {
+  statData.forEach(d => {
     if (!d.mKey) return;
     if (!mMap[d.mKey]) mMap[d.mKey] = { lbl: d.mLbl, total:0, done:0, inprog:0, esc:0, daysArr:[], s1:[], s2:[], s3:[], s4:[] };
     const m = mMap[d.mKey];
@@ -739,7 +742,9 @@ function renderPane2() {
     else if (d.status.includes('ส่งเรื่องต่อ')) m.esc++;
     if (d.totalDays !== null && d.totalDays >= 0) m.daysArr.push(d.totalDays);
 
-    const v1 = daysBetween(d.reportDate, d.resolveDate);
+    // Rule 1: ดำเนินการแก้ไขแล้ว + resolveDate = ช่างภายในซ่อมได้
+    const isDone = d.status === 'ดำเนินการแก้ไขแล้ว';
+    const v1 = isDone ? daysBetween(d.reportDate, d.resolveDate) : null;
     const v2 = daysBetween(d.resolveDate, d.contactDate);
     const v3 = daysBetween(d.contactDate, d.workDate);
     const v4 = daysBetween(d.workDate, d.doneDate);
@@ -776,15 +781,14 @@ function renderPane2() {
   });
 
   // Chart: Pie (total)
-  const totDone   = allData.filter(d => d.status === 'ดำเนินการแก้ไขแล้ว').length;
-  const totInprog = allData.filter(d => d.status === 'กำลังดำเนินการ').length;
-  const totEsc    = allData.filter(d => d.status.includes('ส่งเรื่องต่อ')).length;
+  const totDone   = statData.filter(d => d.status === 'ดำเนินการแก้ไขแล้ว').length;
+  const totEsc    = statData.filter(d => d.status.includes('ส่งเรื่องต่อ')).length;
   destroyChart('cPie');
   chartInstances['cPie'] = new Chart(document.getElementById('cPie'), {
     type: 'doughnut',
     data: {
-      labels: ['แก้ไขแล้ว', 'กำลังดำเนินการ', 'ส่งเรื่องต่อ'],
-      datasets: [{ data: [totDone, totInprog, totEsc], backgroundColor: ['#a8d8a8','#ffd08a','#f4a0a0'], borderWidth: 2, borderColor: '#fff' }]
+      labels: ['แก้ไขแล้ว', 'ส่งเรื่องต่อ'],
+      datasets: [{ data: [totDone, totEsc], backgroundColor: ['#a8d8a8','#f4a0a0'], borderWidth: 2, borderColor: '#fff' }]
     },
     options: { responsive: true, plugins: { legend: { labels: { font:{size:10} } } } }
   });
@@ -819,13 +823,13 @@ function renderPane2() {
 
   // Charts: Success rate by type × month — split into 2 charts
   const MONTH_NAMES = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
-  const months_ts = [...new Set(allData.map(d => d.mKey).filter(Boolean))].sort();
+  const months_ts = [...new Set(statData.map(d => d.mKey).filter(Boolean))].sort();
 
   function buildTypeChart(canvasId, typeFilter, barColor) {
     const map = {};
     // total per type (denominator) = all items of that type across all months
     let grandTotal = 0;
-    allData.forEach(d => {
+    statData.forEach(d => {
       if (!d.mKey) return;
       const isNon = (d['เรื่องแจ้งซ่อม']||'').includes('ไม่ใช่');
       if (typeFilter === 'non' && !isNon) return;
@@ -880,7 +884,7 @@ function renderPane2() {
 
   // Chart: Dept top bar
   const deptMap = {};
-  allData.forEach(d => { const dep = d['แผนก / สถานที่ ที่เจอปัญหา']||'ไม่ระบุ'; deptMap[dep] = (deptMap[dep]||0)+1; });
+  statData.forEach(d => { const dep = d['แผนก / สถานที่ ที่เจอปัญหา']||'ไม่ระบุ'; deptMap[dep] = (deptMap[dep]||0)+1; });
   const topDept = Object.entries(deptMap).sort((a,b) => b[1]-a[1]).slice(0,6);
   destroyChart('cDept');
   chartInstances['cDept'] = new Chart(document.getElementById('cDept'), {
