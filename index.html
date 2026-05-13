@@ -277,7 +277,16 @@ tbody tr:hover { background: #f8faff; }
   </div>
 
   <div class="chart-full">
-    <h3>⏱ เวลาเฉลี่ยในการแก้ไข (วัน) รายเดือน</h3>
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+      <h3 style="margin:0">⏱ เวลาเฉลี่ยในการแก้ไข (วัน) รายเดือน</h3>
+      <select id="avgStageSelect" onchange="renderAvgDaysChart()" style="padding:6px 12px;border-radius:8px;border:1.5px solid #d0daf0;font-size:13px;color:#444;background:#f8faff;cursor:pointer">
+        <option value="s1">ช่างภายในประเมิน (แจ้ง → ตรวจสอบ/แก้ไข)</option>
+        <option value="s2">ติดต่อช่างนอก (ตรวจสอบ → ติดต่อช่างนอก)</option>
+        <option value="s3">ช่างนอกดำเนินการ (ติดต่อ → เริ่มงาน)</option>
+        <option value="s4">ช่างนอกดำเนินการเสร็จ (เริ่มงาน → เสร็จ)</option>
+        <option value="total">รวมทั้งหมด (แจ้ง → เสร็จ)</option>
+      </select>
+    </div>
     <canvas id="cAvgDays"></canvas>
   </div>
 
@@ -776,30 +785,46 @@ function renderPane2() {
     options: { responsive: true, plugins: { legend: { labels: { font:{size:10} } } } }
   });
 
-  // Chart: Avg days line (straight)
-  destroyChart('cAvgDays');
-  chartInstances['cAvgDays'] = new Chart(document.getElementById('cAvgDays'), {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [
-        { label: 'รวมทั้งหมด',       data: months.map(k => avg(mMap[k].daysArr)), borderColor:'#6b9de8', backgroundColor:'rgba(107,157,232,0.1)', tension:0, fill:true, pointRadius:4 },
-        { label: 'แจ้ง→ตรวจสอบ',    data: months.map(k => avg(mMap[k].s1)),     borderColor:'#a8d8a8', backgroundColor:'transparent', tension:0, pointRadius:3 },
-        { label: 'ติดต่อช่าง→เริ่มงาน', data: months.map(k => avg(mMap[k].s3)),  borderColor:'#ffd08a', backgroundColor:'transparent', tension:0, pointRadius:3, borderDash:[4,2] },
-      ]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { labels: { font:{size:10} } },
-        topLabel: { display: true, suffix: ' วัน', fontSize: 10, offset: 5, useDatasetColor: true }
+  // Chart: Avg days — dynamic by stage dropdown
+  const STAGE_CONFIG = {
+    s1:    { label: 'ช่างภายในประเมิน (แจ้ง → ตรวจสอบ/แก้ไข)',    color: '#90c2e7', key: 's1' },
+    s2:    { label: 'ติดต่อช่างนอก (ตรวจสอบ → ติดต่อช่างนอก)',     color: '#ce93d8', key: 's2' },
+    s3:    { label: 'ช่างนอกดำเนินการ (ติดต่อ → เริ่มงาน)',         color: '#ffd08a', key: 's3' },
+    s4:    { label: 'ช่างนอกดำเนินการเสร็จ (เริ่มงาน → เสร็จ)',     color: '#a8d8a8', key: 's4' },
+    total: { label: 'รวมทั้งหมด (แจ้ง → เสร็จ)',                   color: '#f4a0a0', key: 'daysArr' },
+  };
+
+  function renderAvgDaysChart() {
+    const sel   = document.getElementById('avgStageSelect')?.value || 's1';
+    const cfg   = STAGE_CONFIG[sel];
+    const data  = months.map(k => avg(mMap[k][cfg.key]));
+    destroyChart('cAvgDays');
+    chartInstances['cAvgDays'] = new Chart(document.getElementById('cAvgDays'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: cfg.label,
+          data,
+          backgroundColor: cfg.color,
+          borderRadius: 7,
+        }]
       },
-      scales: {
-        x: { ticks: TICK },
-        y: { beginAtZero: true, ticks: { ...TICK }, title: { display: true, text: 'วัน', font:{size:10} } }
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          topLabel: { display: true, suffix: ' วัน', fontSize: 12, offset: 5, skipZero: true },
+          tooltip: { callbacks: { label: item => item.raw !== null ? item.raw + ' วัน' : 'ไม่มีข้อมูล' } }
+        },
+        scales: {
+          x: { ticks: TICK },
+          y: { beginAtZero: true, ticks: { ...TICK, callback: v => v + ' วัน' }, title: { display: true, text: 'วันเฉลี่ย', font:{size:10} } }
+        }
       }
-    }
-  });
+    });
+  }
+  renderAvgDaysChart();
 
   // Chart: Type bar
   const typeMap = {};
