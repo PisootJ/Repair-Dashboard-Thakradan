@@ -427,13 +427,27 @@ function parseMarkdown(text) {
 }
 
 /* =================== PROCESS DATA =================== */
+/* ---- fuzzy column finder ---- */
+function findCol(r, ...keywords) {
+  const keys = Object.keys(r);
+  for (const kw of keywords) {
+    // exact match first
+    if (r[kw] !== undefined) return r[kw] || '';
+    // partial match
+    const hit = keys.find(k => k.includes(kw));
+    if (hit) return r[hit] || '';
+  }
+  return '';
+}
+
 function processData(rows) {
   return rows.map((r, idx) => {
-    const reportDate  = parseDate(r['วันที่แจ้งซ่อม']);
-    const resolveDate = parseDate(r['วันที่ได้รับการแก้ไข หรือแก้ไขไม่ได้ต้องส่งเรื่องต่อ']);
-    const contactDate = parseDate(r['วันที่ติดต่อช่างนอก']);
-    const workDate    = parseDate(r['วันที่ช่างดำเนินการ']);
-    const doneDate    = parseDate(r['วันที่ดำเนินการเสร็จ']);
+    // Try multiple column name variations for each date field
+    const reportDate  = parseDate(findCol(r, 'วันที่แจ้งซ่อม', 'Timestamp', 'วันที่แจ้ง', 'วันที่'));
+    const resolveDate = parseDate(findCol(r, 'วันที่ได้รับการแก้ไข', 'วันที่แก้ไข', 'วันที่เสร็จ'));
+    const contactDate = parseDate(findCol(r, 'วันที่ติดต่อช่างนอก', 'วันที่ติดต่อ'));
+    const workDate    = parseDate(findCol(r, 'วันที่ช่างดำเนินการ', 'วันที่ดำเนินการ'));
+    const doneDate    = parseDate(findCol(r, 'วันที่ดำเนินการเสร็จ', 'วันที่เสร็จ', 'วันที่เสร็จสิ้น'));
     const status      = (r['สถานะ'] || '').trim();
 
     let totalDays = null;
