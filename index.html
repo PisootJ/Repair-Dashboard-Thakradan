@@ -978,10 +978,14 @@ function parseCSV(csv) {
   });
 }
 
+/* =================== CONFIG =================== */
+// หลังติดตั้ง Google Apps Script แล้ว วาง URL ที่นี่:
+const APPS_SCRIPT_URL = '';
+// ตัวอย่าง: 'https://script.google.com/macros/s/AKfy.../exec'
+
 /* =================== MAIN LOAD =================== */
 async function loadData() {
   const FILE_ID = '1JrVY0MHVRq4eAyi-fjKQVRW7LCz8v2vJlQpwm41Iy6E';
-  const CSV_URL = `https://docs.google.com/spreadsheets/d/${FILE_ID}/export?format=csv&gid=0`;
 
   const setErr = msg => {
     document.getElementById('lastUpdate').textContent = msg;
@@ -1029,26 +1033,25 @@ async function loadData() {
         throw new Error('ไม่สามารถดึงข้อมูลได้ — Reload อีกครั้ง [' + debugInfo.slice(0, 150) + ']');
       }
 
-    /* ====== MODE B: standalone / GitHub Pages → fetch CSV directly ====== */
+    /* ====== MODE B: standalone / GitHub Pages ====== */
     } else {
-      document.getElementById('lastUpdate').textContent = 'กำลังโหลดจาก Google Sheets...';
+      document.getElementById('lastUpdate').textContent = 'กำลังโหลดข้อมูล...';
 
-      // Try multiple URL formats (CORS support varies by sheet publish state)
-      const urlsToTry = [
-        // 1. Publish-to-web URL (most CORS-friendly)
-        `https://docs.google.com/spreadsheets/d/${FILE_ID}/pub?output=csv&gid=0`,
-        // 2. gviz endpoint (CORS-friendly for public sheets)
-        `https://docs.google.com/spreadsheets/d/${FILE_ID}/gviz/tq?tqx=out:csv`,
-        // 3. Standard export
-        `https://docs.google.com/spreadsheets/d/${FILE_ID}/export?format=csv&gid=0`,
-      ];
-
-      let lastErr = '';
-      for (const url of urlsToTry) {
+      /* -- B1: Apps Script URL (หากตั้งค่าแล้ว) -- */
+      if (APPS_SCRIPT_URL) {
         try {
-          const resp = await fetch(url);
-          if (!resp.ok) { lastErr = `HTTP ${resp.status}`; continue; }
-          const txt = await resp.text();
-          if (txt && txt.length > 20) {
-            rows = parseCSV(txt);
-            if (rows.length) { conso
+          const resp = await fetch(APPS_SCRIPT_URL);
+          if (resp.ok) {
+            const json = await resp.json();
+            if (json.rows && json.rows.length) {
+              rows = json.rows;
+              console.log('Loaded from Apps Script:', rows.length, 'rows');
+            }
+          }
+        } catch (e) { console.warn('Apps Script fetch failed:', e.message); }
+      }
+
+      /* -- B2: Google Sheets direct CSV (fallback / ถ้ายังไม่มี Apps Script) -- */
+      if (!rows.length) {
+        const csvUrls = [
+          `https://docs.google
