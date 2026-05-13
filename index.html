@@ -3,879 +3,1065 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>กราฟเปรียบเทียบรายเดือน | พลังงาน 2568–2569</title>
-<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<title>Dashboard แจ้งซ่อม รพ.ท่ากระดาน</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-:root {
-  --bg: #F7F4F0;
-  --surface: #FFFFFF;
-  --border: #E8E2DA;
-  --text: #3D3530;
-  --muted: #8A7F78;
-  --sage: #8FAE9A;
-  --sage-light: #D4E8DC;
-  --rose: #D4889A;
-  --rose-light: #F5D8DF;
-  --sky: #7BAAC4;
-  --sky-light: #D4E8F5;
-  --amber: #C4A45A;
-  --amber-light: #F5EAC8;
-  --lavender: #9A8FC4;
-  --lavender-light: #E5E0F5;
-  --coral: #C47A5A;
-  --coral-light: #F5DDD0;
-  --c68: #A8C4B8;
-  --c69: #7BAAC4;
-  --target: #D4889A;
+:root { color-scheme: light; }
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
+body { background: #f4f6fb; color: #333; min-height: 100vh; }
+
+/* ===== TABS ===== */
+.tab-bar { display: flex; background: #fff; border-bottom: 2px solid #e8ecf4; padding: 0 16px; position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+.tab-btn { padding: 13px 20px; border: none; background: none; cursor: pointer; font-size: 13px; font-weight: 600; color: #9aa3b5; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.2s; }
+.tab-btn.active { color: #6b9de8; border-bottom-color: #6b9de8; }
+.tab-btn:hover { color: #6b9de8; }
+
+.tab-pane { display: none; padding: 16px; }
+.tab-pane.active { display: block; }
+
+/* ===== HEADER ===== */
+.dash-header { border-radius: 14px; padding: 16px 20px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+.dash-header h1 { font-size: 16px; font-weight: 700; }
+.dash-header .sub { font-size: 11px; margin-top: 3px; opacity: 0.75; }
+.header-blue { background: linear-gradient(120deg, #c5dcf5 0%, #d4ecd4 100%); color: #2a5298; }
+.header-red { background: linear-gradient(120deg, #ffd5d5 0%, #fde8d8 100%); color: #9c2a2a; }
+.header-purple { background: linear-gradient(120deg, #e6e0f8 0%, #daf0f0 100%); color: #4a2a8c; }
+
+/* ===== KPI CARDS ===== */
+.kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 16px; }
+.kpi { background: #fff; border-radius: 12px; padding: 14px 12px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.kpi .num { font-size: 38px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+.kpi .lbl { font-size: 10px; color: #9aa3b5; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+.kpi .sub-lbl { font-size: 9px; color: #bbb; margin-top: 2px; }
+.c-blue { color: #6b9de8; }
+.c-green { color: #5bb85d; }
+.c-orange { color: #f5a623; }
+.c-red { color: #e05c5c; }
+.c-purple { color: #9b5de5; }
+.c-teal { color: #3bb8a8; }
+
+/* ===== DAYS SUMMARY ===== */
+.section-title { font-size: 12px; font-weight: 700; color: #7a8aaa; text-transform: uppercase; letter-spacing: 0.5px; margin: 4px 0 10px; }
+.days-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 16px; }
+.day-card { background: #fff; border-radius: 12px; padding: 12px 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-left: 4px solid; }
+.day-card.s1 { border-color: #90c2e7; }
+.day-card.s2 { border-color: #a8d8a8; }
+.day-card.s3 { border-color: #ffd08a; }
+.day-card.s4 { border-color: #ce93d8; }
+.day-card.s5 { border-color: #80cbc4; }
+.day-num { font-size: 30px; font-weight: 800; color: #444; }
+.day-lbl { font-size: 10px; color: #888; margin-top: 2px; line-height: 1.4; }
+.day-cnt { font-size: 9px; color: #bbb; margin-top: 2px; }
+
+/* ===== FILTERS ===== */
+.filter-bar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; background: #fff; padding: 10px 14px; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+.filter-bar label { font-size: 11px; color: #7a8aaa; font-weight: 600; }
+.filter-bar select { padding: 5px 10px; border: 1px solid #dde3f0; border-radius: 8px; font-size: 12px; color: #444; background: #f9fafd; cursor: pointer; }
+.filter-bar select:focus { outline: none; border-color: #6b9de8; }
+
+/* ===== TABLE ===== */
+.tbl-wrap { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 11px; min-width: 620px; }
+thead th { background: #eef2fb; color: #5b7ab8; font-weight: 700; padding: 9px 11px; text-align: left; white-space: nowrap; font-size: 11px; }
+tbody td { padding: 8px 11px; border-top: 1px solid #f0f3fa; color: #444; vertical-align: middle; }
+tbody tr:hover { background: #f8faff; }
+.dept-chip { display: inline-block; background: #e8eeff; color: #3a5cb8; padding: 2px 7px; border-radius: 8px; font-size: 10px; font-weight: 600; white-space: nowrap; }
+.type-chip { font-size: 10px; color: #9aa3b5; }
+.badge { display: inline-block; padding: 3px 8px; border-radius: 20px; font-size: 10px; font-weight: 700; white-space: nowrap; }
+.b-done { background: #e4f5e4; color: #2a7a2a; }
+.b-inprog { background: #fff4e0; color: #b86a00; }
+.b-esc { background: #fde8e8; color: #b82a2a; }
+
+/* ===== TRACKING CARDS ===== */
+.track-card {
+  background: #fff; border-radius: 18px; box-shadow: 0 4px 18px rgba(0,0,0,0.09);
+  margin-bottom: 12px; border-left: 5px solid #f4a0a0; overflow: hidden;
+  transition: box-shadow 0.2s;
 }
-html { font-size: 13px; }
-body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
-
-/* TOP */
-.topbar {
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  padding: 16px 28px;
-  display: flex; align-items: center; justify-content: space-between;
-  position: sticky; top: 0; z-index: 100;
-  box-shadow: 0 1px 8px rgba(61,53,48,0.06);
+.track-card:hover { box-shadow: 0 6px 24px rgba(0,0,0,0.13); }
+/* Summary row — always visible, clickable */
+.track-summary {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 16px 22px; cursor: pointer; gap: 14px; user-select: none;
 }
-.topbar-title { font-size: 17px; font-weight: 600; color: var(--text); }
-.topbar-sub { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
-.pill { background: var(--sage-light); color: #3D6B52; padding: 5px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+.track-summary:hover { background: #fdf5f5; }
+.track-title { font-size: 17px; font-weight: 800; color: #1e2d50; line-height: 1.4; }
+.track-summary-right { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+.track-elapsed {
+  font-size: 22px; font-weight: 900; color: #fff;
+  background: linear-gradient(135deg, #e05c5c, #f59b84);
+  padding: 8px 16px; border-radius: 14px; white-space: nowrap;
+  box-shadow: 0 3px 10px rgba(224,92,92,0.3); text-align: center; line-height: 1.2;
+}
+.track-elapsed .elapsed-unit { font-size: 11px; font-weight: 600; opacity: 0.85; display: block; }
+.track-chevron {
+  font-size: 18px; color: #c0c8d8; transition: transform 0.25s; flex-shrink: 0;
+}
+.track-card.open .track-chevron { transform: rotate(180deg); }
+/* Detail panel — hidden until open */
+.track-detail {
+  display: none; padding: 0 22px 18px; border-top: 1px solid #f4e8e8;
+}
+.track-card.open .track-detail { display: block; }
+.track-meta { font-size: 13px; color: #8898b8; margin-bottom: 14px; padding-top: 12px; }
+.track-meta .dept-chip { font-size: 12px; }
+.note-box { margin-top: 14px; background: #fffbec; border-left: 4px solid #ffd08a; padding: 10px 14px; border-radius: 0 10px 10px 0; font-size: 13px; color: #7a6a30; font-weight: 500; }
 
-/* TABS */
-.tabs { display: flex; gap: 6px; padding: 14px 28px 0; background: var(--surface); border-bottom: 1px solid var(--border); }
-.tab { padding: 8px 18px; border-radius: 8px 8px 0 0; font-size: 13px; font-weight: 500; cursor: pointer; color: var(--muted); border: 1px solid transparent; border-bottom: none; transition: all 0.2s; }
-.tab:hover { color: var(--text); background: var(--bg); }
-.tab.active { color: var(--text); background: var(--bg); border-color: var(--border); border-bottom: 1px solid var(--bg); margin-bottom: -1px; }
+/* ===== STEP TIMELINE ===== */
+.timeline { display: flex; align-items: flex-start; overflow-x: auto; padding: 8px 0 12px; gap: 0; }
+.step-box { text-align: center; width: 110px; flex-shrink: 0; }
+.step-circle {
+  width: 54px; height: 54px; border-radius: 50%; margin: 0 auto 8px;
+  display: flex; align-items: center; justify-content: center; font-size: 22px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.sc-done { background: linear-gradient(135deg, #c8f0c8, #a8e0a8); }
+.sc-active { background: linear-gradient(135deg, #fff9c4, #ffecb3); border: 3px dashed #f5b800; animation: blink 1.4s ease-in-out infinite; }
+.sc-pending { background: #f0f2f8; box-shadow: none; }
+@keyframes blink { 0%,100%{opacity:1}50%{opacity:0.55} }
+.step-lbl { font-size: 11px; color: #666; line-height: 1.5; white-space: pre-line; font-weight: 600; }
+.step-date { font-size: 11px; color: #6b9de8; font-weight: 700; margin-top: 4px; }
+.step-days-spent { font-size: 13px; font-weight: 900; color: #e07000; margin-top: 3px; background: #fff3e0; display: inline-block; padding: 1px 8px; border-radius: 8px; }
+.connector { height: 3px; width: 36px; flex-shrink: 0; background: #e0e4f0; margin-bottom: 30px; border-radius: 2px; }
+.connector.done { background: linear-gradient(90deg, #a8d8a8, #80c880); }
 
-/* CONTENT */
-.content { padding: 24px 28px; }
-.page { display: none; }
-.page.active { display: block; }
+/* ===== MONTHLY SUMMARY TABLE ===== */
+.month-summary { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 16px; overflow-x: auto; }
+.month-summary table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 480px; }
+.month-summary thead th { background: #eef2fb; color: #5b7ab8; font-weight: 700; padding: 8px 12px; text-align: center; font-size: 11px; white-space: nowrap; }
+.month-summary thead th:first-child { text-align: left; }
+.month-summary tbody td { padding: 7px 12px; border-top: 1px solid #f0f3fa; text-align: center; }
+.month-summary tbody td:first-child { text-align: left; font-weight: 600; color: #444; }
+.month-summary tbody tr:hover { background: #f8faff; }
+.month-summary .tot { font-weight: 800; color: #6b9de8; font-size: 14px; }
+.month-summary .d { color: #5bb85d; font-weight: 700; }
+.month-summary .i { color: #f5a623; font-weight: 700; }
+.month-summary .e { color: #e05c5c; font-weight: 700; }
+.month-summary .p { font-size: 11px; color: #888; }
+.month-summary tfoot td { background: #f4f6fb; font-weight: 800; padding: 8px 12px; border-top: 2px solid #dde3f0; text-align: center; font-size: 12px; }
+.month-summary tfoot td:first-child { text-align: left; color: #5b7ab8; }
 
-/* KPI ROW */
-.kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 22px; }
-.kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; }
-.kpi-lbl { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 6px; }
-.kpi-val { font-size: 28px; font-weight: 700; line-height: 1; }
-.kpi-sub { font-size: 11px; color: var(--muted); margin-top: 5px; }
+/* ===== CHARTS ===== */
+.chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+.chart-card { background: #fff; border-radius: 12px; padding: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.chart-card h3 { font-size: 12px; color: #7a8aaa; font-weight: 700; margin-bottom: 10px; }
+.chart-card canvas { max-height: 180px; }
+.chart-full { background: #fff; border-radius: 12px; padding: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 14px; }
+.chart-full h3 { font-size: 12px; color: #7a8aaa; font-weight: 700; margin-bottom: 10px; }
+.chart-full canvas { max-height: 200px; }
 
-/* CARD */
-.card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px 22px; margin-bottom: 16px; }
-.card-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
-.card-sub { font-size: 11px; color: var(--muted); margin-bottom: 16px; }
+.loading-msg { text-align: center; padding: 40px; color: #bbb; font-size: 13px; }
+.empty-msg { text-align: center; padding: 30px; color: #ccc; font-size: 12px; }
+.no-data-row td { text-align: center; padding: 20px; color: #bbb; }
 
-/* GRID */
-.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
-
-/* CHART WRAP */
-.ch { position: relative; width: 100%; }
-
-/* FILTER */
-.filter-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; align-items: center; }
-.filter-label { font-size: 11px; color: var(--muted); margin-right: 4px; }
-.filter-btn { padding: 5px 13px; border-radius: 16px; border: 1px solid var(--border); font-size: 12px; cursor: pointer; background: var(--surface); color: var(--muted); font-family: 'Sarabun', sans-serif; transition: all 0.15s; }
-.filter-btn:hover { border-color: var(--sage); color: var(--text); }
-.filter-btn.on { background: var(--sage-light); color: #3D6B52; border-color: var(--sage); font-weight: 500; }
-.filter-btn.on-amber { background: var(--amber-light); color: #7A5E1A; border-color: var(--amber); font-weight: 500; }
-.filter-btn.on-rose { background: var(--rose-light); color: #7A3050; border-color: var(--rose); font-weight: 500; }
-
-/* LEGEND */
-.legend { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 12px; }
-.leg { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--muted); }
-.leg-sq { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
-
-/* SMALL BADGE */
-.badge-pass { background: var(--sage-light); color: #3D6B52; padding: 2px 9px; border-radius: 10px; font-size: 11px; font-weight: 500; }
-.badge-fail { background: var(--rose-light); color: #7A3050; padding: 2px 9px; border-radius: 10px; font-size: 11px; font-weight: 500; }
-.badge-near { background: var(--amber-light); color: #7A5E1A; padding: 2px 9px; border-radius: 10px; font-size: 11px; font-weight: 500; }
-
-/* TABLE */
-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-th { text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid var(--border); }
-td { padding: 8px 12px; border-bottom: 1px solid #F2EDE7; }
-tr:last-child td { border-bottom: none; }
-tr:hover td { background: #FAF8F5; }
-.td-r { text-align: right; }
-
-/* MINI CHART GRID */
-.mini-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-.mini-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
-.mini-name { font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.mini-pct { font-size: 11px; margin-bottom: 8px; }
-.mini-ch { position: relative; width: 100%; height: 160px; }
+@media (max-width: 580px) {
+  .chart-grid { grid-template-columns: 1fr; }
+  .kpi-row { grid-template-columns: repeat(2, 1fr); }
+  .days-row { grid-template-columns: repeat(2, 1fr); }
+}
 </style>
 </head>
 <body>
 
-<div style="background:#2D4A3A;padding:8px 28px;display:flex;align-items:center;gap:16px;font-family:Sarabun,sans-serif;font-size:12px;">
-  <span style="color:#9FE1CB;font-weight:500;">⚡ พลังงาน สสจ.กาญจนบุรี 2568–2569</span>
-  <span style="color:rgba(255,255,255,0.3);">|</span>
-  <a href="index.html" style="color:#FFFFFF;text-decoration:none;font-weight:600;">📊 กราฟรายเดือน</a>
-  <a href="overview.html" style="color:#9FE1CB;text-decoration:none;">🗂 ภาพรวม KPI</a>
-</div>
-<div class="topbar">
-  <div>
-    <div class="topbar-title">📊 กราฟเปรียบเทียบรายเดือน — การใช้น้ำมันเชื้อเพลิง</div>
-    <div class="topbar-sub">สำนักงานสาธารณสุขจังหวัดกาญจนบุรี | ปีงบประมาณ 2568 vs 2569 (ต.ค.–มี.ค.)</div>
-  </div>
-  <div class="pill">เป้าหมาย ลด 15%</div>
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="showTab(0)">📋 ภาพรวม</button>
+  <button class="tab-btn" onclick="showTab(1)">🔴 ส่งเรื่องต่อ</button>
+  <button class="tab-btn" onclick="showTab(2)">📊 ประสิทธิภาพ</button>
 </div>
 
-<div class="tabs">
-  <div class="tab active" onclick="showPage('province',this)">ภาพรวมจังหวัด</div>
-  <div class="tab" onclick="showPage('hosp',this)">โรงพยาบาล</div>
-  <div class="tab" onclick="showPage('sso',this)">สสอ.</div>
-  <div class="tab" onclick="showPage('compare',this)">เปรียบเทียบทุกหน่วย</div>
-  <div class="tab" onclick="showPage('febmar',this)">ก.พ. vs มี.ค.</div>
-</div>
-
-<!-- ════════════════════════════════ -->
-<!-- PAGE 1: PROVINCE OVERVIEW -->
-<!-- ════════════════════════════════ -->
-<div id="province" class="content page active">
-
-  <div class="kpi-row">
-    <div class="kpi"><div class="kpi-lbl">รวมทั้งจังหวัด ปี 68</div><div class="kpi-val" style="color:var(--sky)">148,193</div><div class="kpi-sub">ลิตร (6 เดือน)</div></div>
-    <div class="kpi"><div class="kpi-lbl">รวมทั้งจังหวัด ปี 69</div><div class="kpi-val" style="color:var(--sage)">137,862</div><div class="kpi-sub">ลิตร (6 เดือน)</div></div>
-    <div class="kpi"><div class="kpi-lbl">เปลี่ยนแปลง</div><div class="kpi-val" style="color:var(--amber)">−7.0%</div><div class="kpi-sub">เป้า −15% | ยังขาด 8%</div></div>
-    <div class="kpi"><div class="kpi-lbl">ลดลง (ลิตร)</div><div class="kpi-val" style="color:var(--sage)">10,331</div><div class="kpi-sub">ลิตรต่อ 6 เดือน</div></div>
-  </div>
-
-  <!-- Monthly trend -->
-  <div class="card">
-    <div class="card-title">แนวโน้มรายเดือน — ภาพรวมทั้งจังหวัด (โรงพยาบาล)</div>
-    <div class="card-sub">เปรียบเทียบปริมาณการใช้น้ำมัน ปี 2568 vs 2569 รายเดือน | เส้นประ = เป้าหมาย −15%</div>
-    <div class="legend">
-      <span class="leg"><span class="leg-sq" style="background:#A8C4B8"></span>ปี 2568</span>
-      <span class="leg"><span class="leg-sq" style="background:#7BAAC4"></span>ปี 2569</span>
-      <span class="leg"><span class="leg-sq" style="background:#D4889A; opacity:0.7"></span>เป้าหมาย (ลด 15%)</span>
-    </div>
-    <div class="ch" style="height:280px"><canvas id="provinceTrend" role="img" aria-label="แนวโน้มรายเดือนรวมทั้งจังหวัด">แนวโน้มรายเดือน</canvas></div>
-  </div>
-
-  <div class="g2">
-    <!-- Monthly % change bar -->
-    <div class="card">
-      <div class="card-title">% เปลี่ยนแปลงรายเดือน</div>
-      <div class="card-sub">แท่งสีชมพู = เพิ่มขึ้น | แท่งสีเขียว = ลดลง</div>
-      <div class="ch" style="height:220px"><canvas id="provincePctBar" role="img" aria-label="% เปลี่ยนแปลงรายเดือน">% เปลี่ยนแปลง</canvas></div>
-    </div>
-    <!-- Pie status -->
-    <div class="card">
-      <div class="card-title">สัดส่วนหน่วยงาน ตามสถานะการประหยัด</div>
-      <div class="card-sub">เทียบกับเป้าหมาย −15%</div>
-      <div class="g2" style="gap:10px; margin-bottom:12px;">
-        <div style="text-align:center; padding:14px; background:var(--sage-light); border-radius:10px;">
-          <div style="font-size:30px; font-weight:700; color:#3D6B52;">13</div>
-          <div style="font-size:11px; color:#5A8C6A;">ผ่านเป้า (≤−15%)</div>
-        </div>
-        <div style="text-align:center; padding:14px; background:var(--rose-light); border-radius:10px;">
-          <div style="font-size:30px; font-weight:700; color:#7A3050;">14</div>
-          <div style="font-size:11px; color:#A04060;">ไม่ผ่านเป้า</div>
-        </div>
-      </div>
-      <div class="ch" style="height:140px"><canvas id="statusPie" role="img" aria-label="สัดส่วนสถานะหน่วยงาน">สัดส่วนสถานะ</canvas></div>
+<!-- ========== TAB 0: OVERVIEW ========== -->
+<div id="pane0" class="tab-pane active">
+  <div class="dash-header header-blue">
+    <div>
+      <h1>🏥 Dashboard แจ้งซ่อม รพ.ท่ากระดาน</h1>
+      <div class="sub" id="lastUpdate">กำลังโหลดข้อมูลจาก Google Drive...</div>
     </div>
   </div>
-</div>
 
-<!-- ════════════════════════════════ -->
-<!-- PAGE 2: HOSPITALS -->
-<!-- ════════════════════════════════ -->
-<div id="hosp" class="content page">
-
-  <!-- Unit selector -->
-  <div class="filter-wrap">
-    <span class="filter-label">เลือกหน่วย:</span>
-    <button class="filter-btn on" onclick="selectHosp('all',this)">ทั้งหมด</button>
-    <button class="filter-btn" onclick="selectHosp('pass',this)">ผ่านเป้า</button>
-    <button class="filter-btn" onclick="selectHosp('fail',this)">ไม่ผ่าน</button>
+  <div id="kpiArea" class="kpi-row">
+    <div class="kpi"><div class="num c-blue">—</div><div class="lbl">ทั้งหมด</div></div>
   </div>
 
-  <!-- Mini chart grid -->
-  <div class="mini-grid" id="hospMiniGrid"></div>
+  <div class="section-title">⏱ เวลาเฉลี่ยแต่ละขั้นตอน</div>
+  <div id="daysArea" class="days-row"></div>
 
-  <!-- Detail chart -->
-  <div class="card" style="margin-top:16px;" id="hospDetailCard">
-    <div class="card-title" id="hospDetailTitle">กราฟรายเดือนทุกโรงพยาบาล — รวม</div>
-    <div class="card-sub">คลิกที่การ์ดด้านบนเพื่อดูรายละเอียดหน่วยนั้น</div>
-    <div class="legend">
-      <span class="leg"><span class="leg-sq" style="background:#A8C4B8"></span>ปี 2568</span>
-      <span class="leg"><span class="leg-sq" style="background:#7BAAC4"></span>ปี 2569</span>
-    </div>
-    <div class="ch" style="height:300px"><canvas id="hospDetail" role="img" aria-label="กราฟรายเดือนโรงพยาบาล">กราฟโรงพยาบาล</canvas></div>
+  <div class="section-title">📅 สรุปรายเดือน</div>
+  <div class="month-summary" id="monthSummaryWrap">
+    <table>
+      <thead>
+        <tr>
+          <th>เดือน</th>
+          <th>ทั้งหมด</th>
+          <th>✓ แก้ไขแล้ว</th>
+          <th>⏳ กำลังดำเนินการ</th>
+          <th>🔴 ส่งเรื่องต่อ</th>
+          <th>อัตราสำเร็จ</th>
+          <th>เวลาเฉลี่ย (วัน)</th>
+        </tr>
+      </thead>
+      <tbody id="monthSummaryBody">
+        <tr><td colspan="7" style="text-align:center;padding:16px;color:#bbb">กำลังโหลด...</td></tr>
+      </tbody>
+      <tfoot id="monthSummaryFoot"></tfoot>
+    </table>
+  </div>
+
+  <div class="filter-bar">
+    <label>เดือน:</label>
+    <select id="fMonth" onchange="renderPane0()"><option value="">ทั้งหมด</option></select>
+    <label>สถานะ:</label>
+    <select id="fStatus" onchange="renderPane0()">
+      <option value="">ทั้งหมด</option>
+      <option value="ดำเนินการแก้ไขแล้ว">ดำเนินการแก้ไขแล้ว</option>
+      <option value="กำลังดำเนินการ">กำลังดำเนินการ</option>
+      <option value="แก้ไขไม่ได้ ส่งเรื่องต่อ">แก้ไขไม่ได้ ส่งเรื่องต่อ</option>
+    </select>
+    <label>ประเภท:</label>
+    <select id="fType" onchange="renderPane0()"><option value="">ทั้งหมด</option></select>
+    <label>แผนก:</label>
+    <select id="fDept" onchange="renderPane0()"><option value="">ทั้งหมด</option></select>
+  </div>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>วันที่แจ้ง</th>
+          <th>แผนก</th>
+          <th>รายละเอียด</th>
+          <th>ประเภท</th>
+          <th>ผู้แจ้ง</th>
+          <th>สถานะ</th>
+          <th>ช่างนอก</th>
+          <th>รวม (วัน)</th>
+        </tr>
+      </thead>
+      <tbody id="mainTbody">
+        <tr><td colspan="9" class="loading-msg">กำลังโหลด...</td></tr>
+      </tbody>
+    </table>
   </div>
 </div>
 
-<!-- ════════════════════════════════ -->
-<!-- PAGE 3: SSO -->
-<!-- ════════════════════════════════ -->
-<div id="sso" class="content page">
-
-  <div class="filter-wrap">
-    <span class="filter-label">เลือกหน่วย:</span>
-    <button class="filter-btn on" onclick="selectSso('all',this)">ทั้งหมด</button>
-    <button class="filter-btn" onclick="selectSso('pass',this)">ผ่านเป้า</button>
-    <button class="filter-btn" onclick="selectSso('fail',this)">ไม่ผ่าน</button>
-  </div>
-
-  <div class="mini-grid" id="ssoMiniGrid"></div>
-
-  <div class="card" style="margin-top:16px;">
-    <div class="card-title" id="ssoDetailTitle">กราฟรายเดือน สสอ. — รวม</div>
-    <div class="card-sub">คลิกที่การ์ดด้านบนเพื่อดูรายละเอียดหน่วยนั้น</div>
-    <div class="legend">
-      <span class="leg"><span class="leg-sq" style="background:#A8C4B8"></span>ปี 2568</span>
-      <span class="leg"><span class="leg-sq" style="background:#7BAAC4"></span>ปี 2569</span>
+<!-- ========== TAB 1: ESCALATED ========== -->
+<div id="pane1" class="tab-pane">
+  <div class="dash-header header-red">
+    <div>
+      <h1>🔴 ติดตาม "แก้ไขไม่ได้ ส่งเรื่องต่อ"</h1>
+      <div class="sub">ติดตามสถานะรายวันของแต่ละขั้นตอน</div>
     </div>
-    <div class="ch" style="height:300px"><canvas id="ssoDetail" role="img" aria-label="กราฟรายเดือน สสอ.">กราฟ สสอ.</canvas></div>
+    <div id="escalateStat"></div>
   </div>
+  <div id="escalateArea"><div class="loading-msg">กำลังโหลด...</div></div>
 </div>
 
-<!-- ════════════════════════════════ -->
-<!-- PAGE 4: COMPARISON -->
-<!-- ════════════════════════════════ -->
-<div id="compare" class="content page">
-  <div class="card">
-    <div class="card-title">เปรียบเทียบ % เปลี่ยนแปลงทุกหน่วย — เรียงจากลดมากสุด</div>
-    <div class="card-sub">เส้นสีชมพู = เป้าหมาย −15% | สีเขียว = ลดลง | สีชมพู = เพิ่มขึ้น</div>
-    <div class="filter-wrap" style="margin-top:4px;">
-      <button class="filter-btn on" onclick="filterCompare('all',this)">ทั้งหมด</button>
-      <button class="filter-btn" onclick="filterCompare('hosp',this)">เฉพาะ รพ.</button>
-      <button class="filter-btn" onclick="filterCompare('sso',this)">เฉพาะ สสอ.</button>
+<!-- ========== TAB 2: PERFORMANCE ========== -->
+<div id="pane2" class="tab-pane">
+  <div class="dash-header header-purple">
+    <div>
+      <h1>📊 ประสิทธิภาพการแจ้งซ่อม</h1>
+      <div class="sub">เปรียบเทียบรายเดือน • ปีต่อปี</div>
     </div>
-    <div class="ch" id="compareWrap" style="height:680px"><canvas id="compareChart" role="img" aria-label="เปรียบเทียบ % ทุกหน่วย">เปรียบเทียบทุกหน่วย</canvas></div>
   </div>
 
-  <div class="card">
-    <div class="card-title">แนวโน้มรายเดือน — ภาพรวมจังหวัด เทียบทุกหน่วยบริการ</div>
-    <div class="card-sub">ปี 2568 (เส้นประ) vs ปี 2569 (เส้นทึบ) รายเดือน ต.ค.–มี.ค.</div>
-    <div class="ch" style="height:320px"><canvas id="allLineChart" role="img" aria-label="เส้นแนวโน้มรายเดือนทุกหน่วย">แนวโน้มทุกหน่วย</canvas></div>
+  <div class="chart-grid">
+    <div class="chart-card">
+      <h3>📅 จำนวนแจ้งซ่อมรายเดือน (แยกสถานะ)</h3>
+      <canvas id="cCount"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>🥧 สัดส่วนสถานะทั้งหมด</h3>
+      <canvas id="cPie"></canvas>
+    </div>
+  </div>
+
+  <div class="chart-full">
+    <h3>⏱ เวลาเฉลี่ยในการแก้ไข (วัน) รายเดือน</h3>
+    <canvas id="cAvgDays"></canvas>
+  </div>
+
+  <div class="chart-grid">
+    <div class="chart-card">
+      <h3>🔧 ประเภทงานแจ้งซ่อม</h3>
+      <canvas id="cType"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>🏢 แผนกที่แจ้งซ่อมมากที่สุด</h3>
+      <canvas id="cDept"></canvas>
+    </div>
+  </div>
+
+  <div class="chart-full">
+    <h3>🎯 อัตราความสำเร็จแยกตามประเภทงาน (%)</h3>
+    <canvas id="cTypeSuccess"></canvas>
+  </div>
+
+  <div class="chart-full">
+    <h3>📈 อัตราความสำเร็จรายเดือน (%)</h3>
+    <canvas id="cSuccess"></canvas>
   </div>
 </div>
 
 <script>
-// ══════════════════════════════════════════════
-// DATA
-// ══════════════════════════════════════════════
-const MONTHS = ['ต.ค.','พ.ย.','ธ.ค.','ม.ค.','ก.พ.','มี.ค.'];
+/* =================== INLINE DATALABELS PLUGIN =================== */
+// Custom Chart.js plugin — draws value labels above bars / line points
+const topLabelPlugin = {
+  id: 'topLabel',
+  afterDatasetsDraw(chart) {
+    const opts = chart.config.options?.plugins?.topLabel;
+    if (!opts || !opts.display) return;
+    const { ctx } = chart;
+    const suffix  = opts.suffix  || '';
+    const color   = opts.color   || '#444';
+    const fsize   = opts.fontSize || 11;
+    const offset  = opts.offset  || 6;
+    const skipZero = opts.skipZero !== false; // default: skip 0
 
-const units = [
-  { id:'ssj', name:'สสจ.กาญจนบุรี', type:'สสจ.',
-    m68:[1491.66,1536.3,1771.65,1950.32,1934.6,2093.63],
-    m69:[1389.07,1539.5,2281.69,2151.33,1903.76,2099.93] },
-  { id:'phl', name:'รพ.พหลพลพยุหเสนา', type:'รพ.',
-    m68:[5934.4,4940.79,4901.93,5577.91,4718.28,5831.97],
-    m69:[4351.78,3702.51,4802.32,4737.85,3762.88,4870.77] },
-  { id:'mak', name:'รพ.มะการักษ์', type:'รพ.',
-    m68:[1015.51,1128.19,1135.53,803.52,910.61,1345.51],
-    m69:[848.03,1197.95,1079.53,1190.55,1331.83,1351.0] },
-  { id:'tyr', name:'รพ.ไทรโยค', type:'รพ.',
-    m68:[517.1,520.7,523.7,674.47,714.26,840.9],
-    m69:[315.42,535.79,651.47,449.15,744.2,304.63] },
-  { id:'piy', name:'รพ.สมเด็จฯปิยมหาราช', type:'รพ.',
-    m68:[1974.17,1714.08,1778.09,3230.74,1650.37,2307.92],
-    m69:[1944.75,1521.18,1865.31,2313.92,1931.36,2431.89] },
-  { id:'bop', name:'รพ.บ่อพลอย', type:'รพ.',
-    m68:[434.61,578.78,783.83,581.82,648.18,1027.22],
-    m69:[403.38,564.66,529.48,582.28,669.56,749.36] },
-  { id:'tkd', name:'รพ.ท่ากระดาน', type:'รพ.',
-    m68:[533.38,561.03,382.36,543.47,333.69,344.85],
-    m69:[403.29,279.37,300.79,423.77,499.9,234.72] },
-  { id:'sg19', name:'รพ.สมเด็จฯ องค์ที่19', type:'รพ.',
-    m68:[455.88,798.92,679.32,587.17,403.03,653.19],
-    m69:[702.93,552.77,724.22,926.19,905.2,937.22] },
-  { id:'tng', name:'รพ.ทองผาภูมิ', type:'รพ.',
-    m68:[914.16,945.33,935.93,965.38,938.9,789.8],
-    m69:[1118.35,1305.49,1052.14,1007.77,1282.75,1386.61] },
-  { id:'snk', name:'รพ.สังขละบุรี', type:'รพ.',
-    m68:[6379.69,5373.21,5086.22,5814.8,5060.51,5742.65],
-    m69:[5913.96,5507.28,5328.64,5193.22,4975.18,4610.65] },
-  { id:'jpb', name:'รพ.เจ้าคุณไพบูลย์', type:'รพ.',
-    m68:[757.8,810.26,660.1,436.94,667.96,963.98],
-    m69:[552.47,443.7,572.57,532.53,491.37,671.35] },
-  { id:'lkw', name:'รพ.เลาขวัญ', type:'รพ.',
-    m68:[1066.16,794.93,835.55,838.28,862.2,1136.93],
-    m69:[561.87,643.1,771.22,828.27,565.85,1173.84] },
-  { id:'dmk', name:'รพ.ด่านมะขามเตี้ย', type:'รพ.',
-    m68:[343,620,244,370,374.69,499.7],
-    m69:[253,298.14,446,412,332.74,652.18] },
-  { id:'prb', name:'รพ.พระบารมี', type:'รพ.',
-    m68:[380.9,573.96,551.2,759.54,312.59,602.45],
-    m69:[349.7,339.74,698.88,659.15,456.45,307.61] },
-  { id:'skr', name:'รพ.ศุกร์ศิริฯ', type:'รพ.',
-    m68:[328.35,461.89,420.91,531.2,404.05,412.47],
-    m69:[327.74,307.15,465.5,702.88,708.85,372.65] },
-  { id:'hkg', name:'รพ.ห้วยกระเจา', type:'รพ.',
-    m68:[439.85,654.79,611.22,632.86,592.32,645.55],
-    m69:[481.94,899.32,463.67,520.64,590.31,577.12] },
-  { id:'npp', name:'รพ.หนองปรือ', type:'รพ.',
-    m68:[1722.35,2501.48,2296.45,2498.68,2070.78,1727.71],
-    m69:[1725.8,2402.76,2533.56,2061.59,1885.43,2545.02] },
-  { id:'sso_tyr', name:'สสอ.ไทรโยค', type:'สสอ.',
-    m68:[490.36,439.76,575.3,421.69,608.43,558.06],
-    m69:[412.42,304.5,484.94,346.11,430.53,330.99] },
-  { id:'sso_bop', name:'สสอ.บ่อพลอย', type:'สสอ.',
-    m68:[78.39,30.15,54.26,90.45,60.3,45.23],
-    m69:[63.65,78.73,47.16,64.16,106.55,135.42] },
-  { id:'sso_sri', name:'สสอ.ศรีสวัสดิ์', type:'สสอ.',
-    m68:[322.19,355.32,283.05,246.92,246.91,482.61],
-    m69:[89.72,192.25,318.93,165.51,357.5,526.88] },
-  { id:'sso_tmk', name:'สสอ.ท่ามะกา', type:'สสอ.',
-    m68:[90.5,135.75,120.66,105.58,120.66,197.14],
-    m69:[105.45,96.32,48.94,80.6,99.5,174.55] },
-  { id:'sso_tmw', name:'สสอ.ท่าม่วง', type:'สสอ.',
-    m68:[72.42,45.25,175.56,157.01,58.82,66.37],
-    m69:[71.09,48.15,48.94,59.7,109.78,64.68] },
-  { id:'sso_tng', name:'สสอ.ทองผาภูมิ', type:'สสอ.',
-    m68:[358.32,358.32,358.32,388.18,268.74,418.04],
-    m69:[282.33,318.5,319.03,260.73,327.9,340.73] },
-  { id:'sso_snk', name:'สสอ.สังขละบุรี', type:'สสอ.',
-    m68:[343.76,257.82,343.76,429.7,257.82,214.85],
-    m69:[273.48,273.48,275.61,282.06,188.04,269.14] },
-  { id:'sso_pnm', name:'สสอ.พนมทวน', type:'สสอ.',
-    m68:[60.34,60.34,39.22,60.34,60.34,60.8],
-    m69:[31.6,64.2,32.1,65.8,66.34,31.9] },
-  { id:'sso_hnp', name:'สสอ.หนองปรือ', type:'สสอ.',
-    m68:[12.8,23.93,7.73,11.46,13.8,5.93],
-    m69:[27.46,9.86,55.93,16.06,13.06,12.6] },
-  { id:'sso_hkg', name:'สสอ.ห้วยกระเจา', type:'สสอ.',
-    m68:[60.33,60.72,0,91.07,91.07,151.79],
-    m69:[160.09,112.36,113.91,165.44,148.9,114.48] },
-];
+    chart.data.datasets.forEach((dataset, i) => {
+      const meta = chart.getDatasetMeta(i);
+      if (meta.hidden) return;
+      const dsColor = opts.useDatasetColor
+        ? (dataset.borderColor || dataset.backgroundColor || color)
+        : color;
 
-// Compute pct per unit
-units.forEach(u => {
-  const t68 = u.m68.reduce((a,b)=>a+b,0);
-  const t69 = u.m69.reduce((a,b)=>a+b,0);
-  u.total68 = t68;
-  u.total69 = t69;
-  u.pct = t68 > 0 ? ((t69-t68)/t68*100) : 0;
-});
+      meta.data.forEach((element, j) => {
+        const raw = dataset.data[j];
+        if (raw === null || raw === undefined) return;
+        if (skipZero && raw === 0) return;
+        const label = (Number.isInteger(raw) ? raw : (+raw).toFixed(1)) + suffix;
 
-// ══════════════════════════════════════════════
-// COLORS (pastel)
-// ══════════════════════════════════════════════
-const COL68 = '#A8C4B8';
-const COL69 = '#7BAAC4';
-const COL_TARGET = '#D4889A';
-const COL_PASS = '#8FAE9A';
-const COL_NEAR = '#C4A45A';
-const COL_FAIL = '#D4889A';
-const COL_PASS_BG = 'rgba(143,174,154,0.25)';
-const COL_NEAR_BG = 'rgba(196,164,90,0.2)';
-const COL_FAIL_BG = 'rgba(212,136,154,0.25)';
-
-function getBarColor(pct) {
-  return pct <= -15 ? COL_PASS : pct < 0 ? COL_NEAR : COL_FAIL;
-}
-function getBgColor(pct) {
-  return pct <= -15 ? COL_PASS_BG : pct < 0 ? COL_NEAR_BG : COL_FAIL_BG;
-}
-
-const CHART_OPTS = {
-  responsive: true, maintainAspectRatio: false,
-  plugins: {
-    legend: { display: false },
-    tooltip: { backgroundColor: '#FFFCF9', titleColor: '#3D3530', bodyColor: '#8A7F78', borderColor: '#E8E2DA', borderWidth: 1, padding: 10, cornerRadius: 8 }
+        ctx.save();
+        ctx.font = `bold ${fsize}px 'Segoe UI', sans-serif`;
+        ctx.fillStyle = dsColor;
+        ctx.textAlign  = 'center';
+        ctx.textBaseline = 'bottom';
+        // For horizontal bar (indexAxis:'y'), put label to the right
+        if (chart.config.options?.indexAxis === 'y') {
+          ctx.textBaseline = 'middle';
+          ctx.textAlign = 'left';
+          ctx.fillText(label, element.x + offset, element.y);
+        } else {
+          ctx.fillText(label, element.x, element.y - offset);
+        }
+        ctx.restore();
+      });
+    });
   }
 };
+Chart.register(topLabelPlugin);
 
-// ══════════════════════════════════════════════
-// PAGE 1: PROVINCE
-// ══════════════════════════════════════════════
-const hospUnits = units.filter(u => u.type === 'รพ.');
-const monthlySums68 = MONTHS.map((_,i) => hospUnits.reduce((s,u)=>s+u.m68[i],0));
-const monthlySums69 = MONTHS.map((_,i) => hospUnits.reduce((s,u)=>s+u.m69[i],0));
-const targetLine = monthlySums68.map(v => v * 0.85);
+/* =================== DATA & STATE =================== */
+let allData = [];
+let chartInstances = {};
 
-new Chart(document.getElementById('provinceTrend'), {
-  type:'line',
-  data:{
-    labels: MONTHS,
-    datasets:[
-      { label:'ปี 2568', data: monthlySums68.map(v=>Math.round(v)), borderColor: COL68, backgroundColor: 'rgba(168,196,184,0.12)', pointBackgroundColor: COL68, tension:0.35, borderWidth:2.5, pointRadius:5, fill:true },
-      { label:'ปี 2569', data: monthlySums69.map(v=>Math.round(v)), borderColor: COL69, backgroundColor: 'rgba(123,170,196,0.1)', pointBackgroundColor: COL69, tension:0.35, borderWidth:2.5, pointRadius:5, fill:true },
-      { label:'เป้าหมาย −15%', data: targetLine.map(v=>Math.round(v)), borderColor: COL_TARGET, borderDash:[6,4], borderWidth:1.5, pointRadius:0, fill:false },
-    ]
-  },
-  options:{
-    ...CHART_OPTS,
-    scales:{
-      x:{ grid:{ color:'#F0EBE4' }, ticks:{ color:'#8A7F78', font:{size:11} } },
-      y:{ grid:{ color:'#F0EBE4' }, ticks:{ color:'#8A7F78', font:{size:11}, callback: v=>v.toLocaleString() } }
-    }
+/* =================== TAB SWITCHING =================== */
+function showTab(idx) {
+  document.querySelectorAll('.tab-pane').forEach((el, i) => el.classList.toggle('active', i === idx));
+  document.querySelectorAll('.tab-btn').forEach((el, i) => el.classList.toggle('active', i === idx));
+  if (idx === 2 && allData.length > 0) setTimeout(renderPane2, 50);
+}
+
+/* =================== DATE UTILITIES =================== */
+function parseDate(s) {
+  if (!s || !s.trim()) return null;
+  const p = s.trim().split('/');
+  if (p.length === 3) return new Date(+p[2], +p[0] - 1, +p[1]);
+  return null;
+}
+function daysBetween(a, b) {
+  if (!a || !b) return null;
+  return Math.round((b - a) / 86400000);
+}
+function fmt(d) {
+  if (!d) return '—';
+  return `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
+}
+function avg(arr) {
+  const clean = arr.filter(x => x !== null && x >= 0);
+  if (!clean.length) return null;
+  return +(clean.reduce((a,b) => a+b, 0) / clean.length).toFixed(1);
+}
+
+/* =================== MARKDOWN TABLE PARSER =================== */
+function parseMarkdown(text) {
+  const lines = text.split('\n').filter(l => {
+    const t = l.trim();
+    return t.startsWith('|') && !t.replace(/\|/g,'').replace(/[:\-\s]/g,'');
+    // keep all lines starting with |, but skip separator lines (only :,-,space chars)
+  });
+  // More robust approach:
+  const allLines = text.split('\n').filter(l => l.trim().startsWith('|'));
+  const dataLines = allLines.filter(l => !l.match(/^\|[\s|:\-]+\|$/));
+  if (dataLines.length < 2) return [];
+
+  const parseRow = line => line.split('|').filter((_, i, a) => i > 0 && i < a.length - 1).map(c => c.trim());
+  const headers = parseRow(dataLines[0]);
+  const rows = [];
+  for (let i = 1; i < dataLines.length; i++) {
+    const cells = parseRow(dataLines[i]);
+    if (!cells.length) continue;
+    const obj = {};
+    headers.forEach((h, j) => { obj[h] = cells[j] || ''; });
+    rows.push(obj);
   }
-});
+  return rows;
+}
 
-// % monthly change (province hosp)
-const monthlyPct = MONTHS.map((_,i) => {
-  const v68 = monthlySums68[i], v69 = monthlySums69[i];
-  return v68>0 ? parseFloat(((v69-v68)/v68*100).toFixed(1)) : 0;
-});
-new Chart(document.getElementById('provincePctBar'), {
-  type:'bar',
-  data:{
-    labels: MONTHS,
-    datasets:[{ label:'% เปลี่ยน', data: monthlyPct,
-      backgroundColor: monthlyPct.map(p => p<=0 ? 'rgba(143,174,154,0.55)' : 'rgba(212,136,154,0.55)'),
-      borderColor: monthlyPct.map(p => p<=0 ? COL_PASS : COL_FAIL),
-      borderWidth:1.5, borderRadius:6 }]
-  },
-  options:{
-    ...CHART_OPTS,
-    scales:{
-      x:{ grid:{display:false}, ticks:{color:'#8A7F78',font:{size:11}} },
-      y:{ grid:{color:'#F0EBE4'}, ticks:{color:'#8A7F78',font:{size:11},callback:v=>v+'%'},
-        afterDataLimits(scale){ scale.max = Math.max(scale.max, 5); scale.min = Math.min(scale.min,-5); } }
-    },
-    plugins:{
-      ...CHART_OPTS.plugins,
-      annotation:{
-        annotations:{
-          targetLine:{ type:'line', yMin:-15, yMax:-15, borderColor: COL_TARGET, borderWidth:1.5, borderDash:[5,4] }
-        }
-      }
+/* =================== PROCESS DATA =================== */
+function processData(rows) {
+  return rows.map((r, idx) => {
+    const reportDate  = parseDate(r['วันที่แจ้งซ่อม']);
+    const resolveDate = parseDate(r['วันที่ได้รับการแก้ไข หรือแก้ไขไม่ได้ต้องส่งเรื่องต่อ']);
+    const contactDate = parseDate(r['วันที่ติดต่อช่างนอก']);
+    const workDate    = parseDate(r['วันที่ช่างดำเนินการ']);
+    const doneDate    = parseDate(r['วันที่ดำเนินการเสร็จ']);
+    const status      = (r['สถานะ'] || '').trim();
+
+    let totalDays = null;
+    if (reportDate) {
+      if (doneDate) totalDays = daysBetween(reportDate, doneDate);
+      else if (resolveDate && status === 'ดำเนินการแก้ไขแล้ว') totalDays = daysBetween(reportDate, resolveDate);
     }
-  }
-});
 
-// Status pie
-new Chart(document.getElementById('statusPie'), {
-  type:'doughnut',
-  data:{
-    labels:['ผ่านเป้า (≤−15%)','ลดแต่ยังไม่ถึง','เพิ่มขึ้น','ไม่มีข้อมูล'],
-    datasets:[{ data:[13,7,7,3], backgroundColor:['rgba(143,174,154,0.7)','rgba(196,164,90,0.65)','rgba(212,136,154,0.7)','rgba(168,160,156,0.4)'], borderColor:['#8FAE9A','#C4A45A','#D4889A','#B0A8A4'], borderWidth:1.5 }]
-  },
-  options:{
-    ...CHART_OPTS,
-    cutout:'65%',
-    plugins:{
-      ...CHART_OPTS.plugins,
-      legend:{ display:true, position:'right', labels:{ font:{size:11}, color:'#8A7F78', boxWidth:11, padding:8 } }
-    }
-  }
-});
+    const mKey  = reportDate ? `${reportDate.getFullYear()}-${String(reportDate.getMonth()+1).padStart(2,'0')}` : '';
+    const mLbl  = reportDate ? `${reportDate.getMonth()+1}/${reportDate.getFullYear()}` : '';
+    const isExt = !!(r['หมายเหตุ'] && r['หมายเหตุ'].includes('ช่างนอก'));
 
-// ══════════════════════════════════════════════
-// PAGE 2: HOSPITALS - mini cards
-// ══════════════════════════════════════════════
-const hospData = units.filter(u=>u.type==='รพ.');
-let hospDetailChart = null;
-let hospCurrentFilter = 'all';
-
-function buildHospMini(filter='all') {
-  const data = filter==='all' ? hospData : filter==='pass' ? hospData.filter(u=>u.pct<=-15) : hospData.filter(u=>u.pct>-15);
-  const grid = document.getElementById('hospMiniGrid');
-  grid.innerHTML = '';
-  data.forEach(u => {
-    const sign = u.pct>0?'+':'';
-    const col = getBarColor(u.pct);
-    const card = document.createElement('div');
-    card.className = 'mini-card';
-    card.style.cursor = 'pointer';
-    card.style.borderLeft = `3px solid ${col}`;
-    card.innerHTML = `
-      <div class="mini-name">${u.name}</div>
-      <div class="mini-pct" style="color:${col}; font-weight:600;">${sign}${u.pct.toFixed(1)}% <span style="color:#B0A8A4; font-weight:400; font-size:10px;">vs ปี 68</span></div>
-      <div class="mini-ch"><canvas id="mc_${u.id}" role="img" aria-label="กราฟ ${u.name}"></canvas></div>`;
-    card.onclick = () => showHospDetail(u);
-    grid.appendChild(card);
-    setTimeout(() => {
-      const ctx = document.getElementById('mc_'+u.id);
-      if (!ctx) return;
-      new Chart(ctx, {
-        type:'line',
-        data:{
-          labels: MONTHS,
-          datasets:[
-            { label:'ปี 68', data: u.m68, borderColor: COL68, borderWidth:1.5, pointRadius:2, pointHoverRadius:4, tension:0.35, fill:false },
-            { label:'ปี 69', data: u.m69, borderColor: col, borderWidth:2, pointRadius:2, pointHoverRadius:4, tension:0.35, fill:false }
-          ]
-        },
-        options:{ responsive:true, maintainAspectRatio:false,
-          plugins:{legend:{display:false}, tooltip:{ backgroundColor:'#FFFCF9', titleColor:'#3D3530', bodyColor:'#8A7F78', borderColor:'#E8E2DA', borderWidth:1, padding:7, cornerRadius:6,
-            callbacks:{ label: ctx => ` ${ctx.datasetIndex===0?'ปี 68':'ปี 69'}: ${Math.round(ctx.parsed.y).toLocaleString()} ลิตร` } }},
-          scales:{
-            x:{ display:true, grid:{display:false}, ticks:{color:'#B0A8A4', font:{size:9.5}, maxRotation:0} },
-            y:{ display:true, grid:{color:'#F5F0EB'}, ticks:{color:'#B0A8A4', font:{size:9}, callback: v => v>=1000?(v/1000).toFixed(1)+'K':v, maxTicksLimit:4} }
-          }, animation:false }
-      });
-    }, 50);
+    return { ...r, _id: idx+1, reportDate, resolveDate, contactDate, workDate, doneDate, totalDays, status, mKey, mLbl, isExt };
   });
 }
 
-function showHospDetail(u) {
-  const title = document.getElementById('hospDetailTitle');
-  title.textContent = `กราฟรายเดือน — ${u.name}`;
-  if (hospDetailChart) hospDetailChart.destroy();
-  hospDetailChart = new Chart(document.getElementById('hospDetail'), {
-    type:'bar',
-    data:{
-      labels: MONTHS,
-      datasets:[
-        { label:'ปี 2568', data: u.m68.map(v=>Math.round(v)), backgroundColor:'rgba(168,196,184,0.55)', borderColor: COL68, borderWidth:1.5, borderRadius:5 },
-        { label:'ปี 2569', data: u.m69.map(v=>Math.round(v)), backgroundColor: getBgColor(u.pct)+'BB', borderColor: getBarColor(u.pct), borderWidth:1.5, borderRadius:5 },
-        { label:'เป้าหมาย', data: u.m68.map(v=>Math.round(v*0.85)), type:'line', borderColor: COL_TARGET, borderDash:[5,4], borderWidth:1.5, pointRadius:0, fill:false }
+/* =================== BADGE =================== */
+function badge(s) {
+  if (s === 'ดำเนินการแก้ไขแล้ว') return `<span class="badge b-done">✓ แก้ไขแล้ว</span>`;
+  if (s === 'กำลังดำเนินการ')       return `<span class="badge b-inprog">⏳ กำลังดำเนินการ</span>`;
+  if (s.includes('ส่งเรื่องต่อ'))   return `<span class="badge b-esc">🔴 ส่งเรื่องต่อ</span>`;
+  return `<span class="badge">${s||'—'}</span>`;
+}
+
+/* =================== MONTHLY SUMMARY TABLE =================== */
+function renderMonthSummary() {
+  // Always show ALL data (not filtered) for this summary table
+  const mMap = {};
+  allData.forEach(d => {
+    if (!d.mKey) return;
+    if (!mMap[d.mKey]) mMap[d.mKey] = { lbl: d.mLbl, total:0, done:0, inprog:0, esc:0, days:[] };
+    const m = mMap[d.mKey];
+    m.total++;
+    if (d.status === 'ดำเนินการแก้ไขแล้ว') m.done++;
+    else if (d.status === 'กำลังดำเนินการ') m.inprog++;
+    else if (d.status.includes('ส่งเรื่องต่อ')) m.esc++;
+    if (d.totalDays !== null && d.totalDays >= 0) m.days.push(d.totalDays);
+  });
+
+  const months = Object.keys(mMap).sort();
+  const tbody = document.getElementById('monthSummaryBody');
+  const tfoot = document.getElementById('monthSummaryFoot');
+
+  if (!months.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:16px;color:#bbb">ไม่มีข้อมูล</td></tr>';
+    tfoot.innerHTML = '';
+    return;
+  }
+
+  tbody.innerHTML = months.map(k => {
+    const m = mMap[k];
+    const pct = m.total > 0 ? Math.round(m.done / m.total * 100) : 0;
+    const avgD = m.days.length ? (m.days.reduce((a,b)=>a+b,0)/m.days.length).toFixed(1) : '—';
+    const pctColor = pct >= 80 ? '#2a7a2a' : pct >= 50 ? '#b86a00' : '#c0392b';
+    return `<tr>
+      <td>${m.lbl}</td>
+      <td class="tot">${m.total}</td>
+      <td class="d">${m.done}</td>
+      <td class="i">${m.inprog}</td>
+      <td class="e">${m.esc}</td>
+      <td><span style="font-weight:700;color:${pctColor}">${pct}%</span></td>
+      <td class="p">${avgD}</td>
+    </tr>`;
+  }).join('');
+
+  // Footer totals
+  const totTotal = allData.length;
+  const totDone  = allData.filter(d => d.status === 'ดำเนินการแก้ไขแล้ว').length;
+  const totIn    = allData.filter(d => d.status === 'กำลังดำเนินการ').length;
+  const totEsc   = allData.filter(d => d.status.includes('ส่งเรื่องต่อ')).length;
+  const totPct   = totTotal > 0 ? Math.round(totDone/totTotal*100) : 0;
+  const allDays  = allData.filter(d => d.totalDays !== null && d.totalDays >= 0).map(d => d.totalDays);
+  const totAvg   = allDays.length ? (allDays.reduce((a,b)=>a+b,0)/allDays.length).toFixed(1) : '—';
+
+  tfoot.innerHTML = `<tr>
+    <td>รวมทั้งหมด</td>
+    <td style="color:#6b9de8">${totTotal}</td>
+    <td style="color:#5bb85d">${totDone}</td>
+    <td style="color:#f5a623">${totIn}</td>
+    <td style="color:#e05c5c">${totEsc}</td>
+    <td style="color:#7c3aed">${totPct}%</td>
+    <td style="color:#555">${totAvg}</td>
+  </tr>`;
+}
+
+/* =================== RENDER PANE 0 =================== */
+function renderPane0() {
+  if (!allData.length) return;
+
+  const mSel  = document.getElementById('fMonth').value;
+  const sSel  = document.getElementById('fStatus').value;
+  const tSel  = document.getElementById('fType').value;
+  const dSel  = document.getElementById('fDept').value;
+
+  // KPI base = ignore status filter
+  const kBase = allData.filter(d =>
+    (!mSel || d.mKey === mSel) &&
+    (!tSel || d['เรื่องแจ้งซ่อม'] === tSel) &&
+    (!dSel || d['แผนก / สถานที่ ที่เจอปัญหา'] === dSel)
+  );
+  const total    = kBase.length;
+  const done     = kBase.filter(d => d.status === 'ดำเนินการแก้ไขแล้ว').length;
+  const inprog   = kBase.filter(d => d.status === 'กำลังดำเนินการ').length;
+  const esc      = kBase.filter(d => d.status.includes('ส่งเรื่องต่อ')).length;
+  const extCount = kBase.filter(d => d.isExt).length;
+  const pct      = total > 0 ? Math.round(done / total * 100) : 0;
+
+  document.getElementById('kpiArea').innerHTML = `
+    <div class="kpi"><div class="num c-blue">${total}</div><div class="lbl">รายการทั้งหมด</div></div>
+    <div class="kpi"><div class="num c-green">${done}</div><div class="lbl">แก้ไขเสร็จแล้ว</div></div>
+    <div class="kpi"><div class="num c-orange">${inprog}</div><div class="lbl">กำลังดำเนินการ</div></div>
+    <div class="kpi"><div class="num c-red">${esc}</div><div class="lbl">ส่งเรื่องต่อ</div></div>
+    <div class="kpi"><div class="num c-purple">${pct}%</div><div class="lbl">อัตราสำเร็จ</div></div>
+    <div class="kpi"><div class="num c-teal">${extCount}</div><div class="lbl">ใช้ช่างนอก</div></div>
+  `;
+
+  // Days per step
+  const s1 = kBase.map(d => daysBetween(d.reportDate, d.resolveDate)).filter(x => x !== null && x >= 0);
+  const s2 = kBase.map(d => daysBetween(d.resolveDate, d.contactDate)).filter(x => x !== null && x >= 0);
+  const s3 = kBase.map(d => daysBetween(d.contactDate, d.workDate)).filter(x => x !== null && x >= 0);
+  const s4 = kBase.map(d => daysBetween(d.workDate, d.doneDate)).filter(x => x !== null && x >= 0);
+  const s5 = kBase.filter(d => d.totalDays !== null).map(d => d.totalDays).filter(x => x >= 0);
+  const disp = v => v !== null ? v : '—';
+
+  document.getElementById('daysArea').innerHTML = `
+    <div class="day-card s1"><div class="day-num">${disp(avg(s1))}</div><div class="day-lbl">แจ้งซ่อม → ตรวจสอบ/แก้ไข</div><div class="day-cnt">${s1.length} รายการ</div></div>
+    <div class="day-card s2"><div class="day-num">${disp(avg(s2))}</div><div class="day-lbl">ตรวจสอบ → ติดต่อช่างนอก</div><div class="day-cnt">${s2.length} รายการ</div></div>
+    <div class="day-card s3"><div class="day-num">${disp(avg(s3))}</div><div class="day-lbl">ติดต่อช่างนอก → ช่างเริ่มงาน</div><div class="day-cnt">${s3.length} รายการ</div></div>
+    <div class="day-card s4"><div class="day-num">${disp(avg(s4))}</div><div class="day-lbl">ช่างเริ่มงาน → ดำเนินการเสร็จ</div><div class="day-cnt">${s4.length} รายการ</div></div>
+    <div class="day-card s5"><div class="day-num">${disp(avg(s5))}</div><div class="day-lbl">รวมทั้งหมด (แจ้ง → เสร็จ)</div><div class="day-cnt">${s5.length} รายการ</div></div>
+  `;
+
+  // Table
+  const rows = allData.filter(d =>
+    (!mSel || d.mKey === mSel) &&
+    (!sSel || d.status === sSel) &&
+    (!tSel || d['เรื่องแจ้งซ่อม'] === tSel) &&
+    (!dSel || d['แผนก / สถานที่ ที่เจอปัญหา'] === dSel)
+  );
+
+  const tbody = document.getElementById('mainTbody');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="9" class="no-data-row">ไม่มีข้อมูลในเงื่อนไขที่เลือก</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = rows.map(d => {
+    const shortType = (d['เรื่องแจ้งซ่อม']||'').includes('ไม่ใช่') ? 'ไม่ใช่ครุภัณฑ์' : 'ครุภัณฑ์';
+    const daysColor = d.totalDays === null ? '#bbb' : (d.totalDays > 14 ? '#e05c5c' : '#2a7a2a');
+    const detail = d['รายละเอียดของการแจ้งซ่อม'] || '—';
+    return `
+      <tr>
+        <td style="color:#bbb;font-size:10px">${d._id}</td>
+        <td style="white-space:nowrap">${fmt(d.reportDate)}</td>
+        <td><span class="dept-chip">${d['แผนก / สถานที่ ที่เจอปัญหา']||'—'}</span></td>
+        <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${detail}">${detail}</td>
+        <td><span class="type-chip">${shortType}</span></td>
+        <td>${d['ชื่อผู้แจ้ง']||'—'}</td>
+        <td>${badge(d.status)}</td>
+        <td style="text-align:center">${d.isExt ? '✓' : ''}</td>
+        <td style="text-align:center;font-weight:800;color:${daysColor}">${d.totalDays !== null ? d.totalDays : '—'}</td>
+      </tr>`;
+  }).join('');
+}
+
+/* =================== RENDER PANE 1 =================== */
+function renderPane1() {
+  const esc = allData.filter(d => d.status.includes('ส่งเรื่องต่อ'));
+  const today = new Date();
+
+  document.getElementById('escalateStat').innerHTML =
+    `<div style="background:rgba(255,255,255,0.7);padding:10px 20px;border-radius:16px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.08)">
+      <div style="font-size:36px;font-weight:900;color:#c0392b;line-height:1">${esc.length}</div>
+      <div style="font-size:11px;font-weight:700;color:#9c2a2a;margin-top:2px">รายการคงค้าง</div>
+    </div>`;
+
+  if (!esc.length) {
+    document.getElementById('escalateArea').innerHTML = '<div class="empty-msg">✅ ไม่มีรายการที่ต้องส่งเรื่องต่อ</div>';
+    return;
+  }
+
+  const steps = [
+    { key: 'reportDate',  label: 'แจ้งซ่อม',       icon: '📝' },
+    { key: 'resolveDate', label: 'ตรวจสอบ/\nส่งเรื่อง', icon: '🔍' },
+    { key: 'contactDate', label: 'ติดต่อ\nช่างนอก', icon: '📞' },
+    { key: 'workDate',    label: 'ช่างเริ่ม\nดำเนินการ', icon: '🔧' },
+    { key: 'doneDate',    label: 'เสร็จสิ้น',       icon: '✅' },
+  ];
+
+  document.getElementById('escalateArea').innerHTML = esc.map(d => {
+    // Find current active step
+    let activeIdx = 0;
+    steps.forEach((s, i) => { if (d[s.key]) activeIdx = i + 1; });
+    if (d.doneDate) activeIdx = steps.length;
+
+    const elapsed = d.reportDate ? daysBetween(d.reportDate, today) : null;
+
+    const stepsHTML = steps.map((s, i) => {
+      const isDone   = i < activeIdx;
+      const isActive = i === activeIdx;
+      const dateVal  = d[s.key];
+      const nextDate = steps[i+1] ? d[steps[i+1].key] : null;
+      const daysSpent = dateVal
+        ? (nextDate ? daysBetween(dateVal, nextDate) : (isActive ? daysBetween(dateVal, today) : null))
+        : null;
+
+      const cc = isDone ? 'sc-done' : (isActive ? 'sc-active' : 'sc-pending');
+      const connCls = i <= activeIdx - 1 ? 'done' : '';
+
+      return `
+        ${i > 0 ? `<div class="connector ${connCls}"></div>` : ''}
+        <div class="step-box">
+          <div class="step-circle ${cc}">${s.icon}</div>
+          <div class="step-lbl">${s.label}</div>
+          <div class="step-date">${dateVal ? fmt(dateVal) : '—'}</div>
+          ${daysSpent !== null ? `<div class="step-days-spent">${daysSpent} วัน</div>` : ''}
+        </div>`;
+    }).join('');
+
+    const shortType = (d['เรื่องแจ้งซ่อม']||'').includes('ไม่ใช่') ? 'ไม่ใช่ครุภัณฑ์' : 'ครุภัณฑ์';
+
+    const cardId = `tc-${d._id}`;
+    return `
+      <div class="track-card" id="${cardId}">
+        <div class="track-summary" onclick="toggleCard('${cardId}')">
+          <div class="track-title">${d['รายละเอียดของการแจ้งซ่อม']||'—'}</div>
+          <div class="track-summary-right">
+            <div class="track-elapsed">
+              ${elapsed !== null ? elapsed : '—'}
+              <span class="elapsed-unit">วันที่ผ่านมา</span>
+            </div>
+            <div class="track-chevron">▾</div>
+          </div>
+        </div>
+        <div class="track-detail">
+          <div class="track-meta">
+            <span class="dept-chip">${d['แผนก / สถานที่ ที่เจอปัญหา']||'—'}</span>
+            &nbsp;• ${shortType} &nbsp;• ผู้แจ้ง: <strong>${d['ชื่อผู้แจ้ง']||'—'}</strong>
+            &nbsp;• แจ้งวันที่: ${fmt(d.reportDate)}
+          </div>
+          <div class="timeline">${stepsHTML}</div>
+          ${d['หมายเหตุ'] ? `<div class="note-box">📌 ${d['หมายเหตุ']}</div>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+/* =================== TOGGLE CARD =================== */
+function toggleCard(id) {
+  document.getElementById(id).classList.toggle('open');
+}
+
+/* =================== RENDER PANE 2 =================== */
+function destroyChart(id) {
+  if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; }
+}
+
+function renderPane2() {
+  // Build month map
+  const mMap = {};
+  allData.forEach(d => {
+    if (!d.mKey) return;
+    if (!mMap[d.mKey]) mMap[d.mKey] = { lbl: d.mLbl, total:0, done:0, inprog:0, esc:0, daysArr:[], s1:[], s2:[], s3:[], s4:[] };
+    const m = mMap[d.mKey];
+    m.total++;
+    if (d.status === 'ดำเนินการแก้ไขแล้ว') m.done++;
+    else if (d.status === 'กำลังดำเนินการ') m.inprog++;
+    else if (d.status.includes('ส่งเรื่องต่อ')) m.esc++;
+    if (d.totalDays !== null && d.totalDays >= 0) m.daysArr.push(d.totalDays);
+
+    const v1 = daysBetween(d.reportDate, d.resolveDate);
+    const v2 = daysBetween(d.resolveDate, d.contactDate);
+    const v3 = daysBetween(d.contactDate, d.workDate);
+    const v4 = daysBetween(d.workDate, d.doneDate);
+    if (v1 !== null && v1 >= 0) m.s1.push(v1);
+    if (v2 !== null && v2 >= 0) m.s2.push(v2);
+    if (v3 !== null && v3 >= 0) m.s3.push(v3);
+    if (v4 !== null && v4 >= 0) m.s4.push(v4);
+  });
+
+  const months = Object.keys(mMap).sort();
+  const labels = months.map(k => mMap[k].lbl);
+  const TICK = { font: { size: 10 }, color: '#8898aa' };
+
+  // Chart: Count stacked bar
+  destroyChart('cCount');
+  chartInstances['cCount'] = new Chart(document.getElementById('cCount'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'แก้ไขแล้ว',     data: months.map(k => mMap[k].done),   backgroundColor: '#a8d8a8' },
+        { label: 'กำลังดำเนินการ', data: months.map(k => mMap[k].inprog), backgroundColor: '#ffd08a' },
+        { label: 'ส่งเรื่องต่อ',   data: months.map(k => mMap[k].esc),    backgroundColor: '#f4a0a0' },
       ]
     },
-    options:{
-      ...CHART_OPTS,
-      plugins:{
-        ...CHART_OPTS.plugins,
-        legend:{ display:true, position:'top', labels:{ font:{size:11}, color:'#8A7F78', boxWidth:11, padding:10 } }
-      },
-      scales:{
-        x:{ grid:{display:false}, ticks:{color:'#8A7F78', font:{size:11}} },
-        y:{ grid:{color:'#F0EBE4'}, ticks:{color:'#8A7F78', font:{size:11}, callback:v=>v.toLocaleString()} }
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: { legend: { labels: { font:{size:10} } } },
+      scales: {
+        x: { stacked: true, ticks: TICK },
+        y: { stacked: true, ticks: { ...TICK, stepSize: 1 }, beginAtZero: true }
       }
     }
   });
-  document.getElementById('hospDetailCard').scrollIntoView({ behavior:'smooth', block:'nearest' });
-}
 
-function selectHosp(filter, btn) {
-  hospCurrentFilter = filter;
-  document.querySelectorAll('#hosp .filter-btn').forEach(b=>b.className='filter-btn');
-  btn.className='filter-btn on';
-  buildHospMini(filter);
-  if (hospDetailChart) { hospDetailChart.destroy(); hospDetailChart=null; }
-  document.getElementById('hospDetailTitle').textContent = 'กราฟรายเดือน — คลิกการ์ดด้านบนเพื่อดูรายละเอียด';
-}
-
-// ══════════════════════════════════════════════
-// PAGE 3: SSO - mini cards
-// ══════════════════════════════════════════════
-const ssoData = units.filter(u=>u.type==='สสอ.'||u.type==='สสจ.');
-let ssoDetailChart = null;
-
-function buildSsoMini(filter='all') {
-  const data = filter==='all' ? ssoData : filter==='pass' ? ssoData.filter(u=>u.pct<=-15) : ssoData.filter(u=>u.pct>-15);
-  const grid = document.getElementById('ssoMiniGrid');
-  grid.innerHTML = '';
-  data.forEach(u => {
-    const sign = u.pct>0?'+':'';
-    const col = getBarColor(u.pct);
-    const card = document.createElement('div');
-    card.className = 'mini-card';
-    card.style.cursor = 'pointer';
-    card.style.borderLeft = `3px solid ${col}`;
-    card.innerHTML = `
-      <div class="mini-name">${u.name}</div>
-      <div class="mini-pct" style="color:${col}; font-weight:600;">${sign}${u.pct.toFixed(1)}% <span style="color:#B0A8A4; font-weight:400; font-size:10px;">vs ปี 68</span></div>
-      <div class="mini-ch"><canvas id="smc_${u.id}" role="img" aria-label="กราฟ ${u.name}"></canvas></div>`;
-    card.onclick = () => showSsoDetail(u);
-    grid.appendChild(card);
-    setTimeout(() => {
-      const ctx = document.getElementById('smc_'+u.id);
-      if (!ctx) return;
-      new Chart(ctx, {
-        type:'line',
-        data:{
-          labels: MONTHS,
-          datasets:[
-            { label:'ปี 68', data: u.m68, borderColor: COL68, borderWidth:1.5, pointRadius:2, pointHoverRadius:4, tension:0.35, fill:false },
-            { label:'ปี 69', data: u.m69, borderColor: col, borderWidth:2, pointRadius:2, pointHoverRadius:4, tension:0.35, fill:false }
-          ]
-        },
-        options:{ responsive:true, maintainAspectRatio:false,
-          plugins:{legend:{display:false}, tooltip:{ backgroundColor:'#FFFCF9', titleColor:'#3D3530', bodyColor:'#8A7F78', borderColor:'#E8E2DA', borderWidth:1, padding:7, cornerRadius:6,
-            callbacks:{ label: ctx => ` ${ctx.datasetIndex===0?'ปี 68':'ปี 69'}: ${Math.round(ctx.parsed.y).toLocaleString()} ลิตร` } }},
-          scales:{
-            x:{ display:true, grid:{display:false}, ticks:{color:'#B0A8A4', font:{size:9.5}, maxRotation:0} },
-            y:{ display:true, grid:{color:'#F5F0EB'}, ticks:{color:'#B0A8A4', font:{size:9}, callback: v => v>=1000?(v/1000).toFixed(1)+'K':v, maxTicksLimit:4} }
-          }, animation:false }
-      });
-    }, 50);
+  // Chart: Pie (total)
+  const totDone   = allData.filter(d => d.status === 'ดำเนินการแก้ไขแล้ว').length;
+  const totInprog = allData.filter(d => d.status === 'กำลังดำเนินการ').length;
+  const totEsc    = allData.filter(d => d.status.includes('ส่งเรื่องต่อ')).length;
+  destroyChart('cPie');
+  chartInstances['cPie'] = new Chart(document.getElementById('cPie'), {
+    type: 'doughnut',
+    data: {
+      labels: ['แก้ไขแล้ว', 'กำลังดำเนินการ', 'ส่งเรื่องต่อ'],
+      datasets: [{ data: [totDone, totInprog, totEsc], backgroundColor: ['#a8d8a8','#ffd08a','#f4a0a0'], borderWidth: 2, borderColor: '#fff' }]
+    },
+    options: { responsive: true, plugins: { legend: { labels: { font:{size:10} } } } }
   });
-}
 
-function showSsoDetail(u) {
-  document.getElementById('ssoDetailTitle').textContent = `กราฟรายเดือน — ${u.name}`;
-  if (ssoDetailChart) ssoDetailChart.destroy();
-  ssoDetailChart = new Chart(document.getElementById('ssoDetail'), {
-    type:'bar',
-    data:{
-      labels: MONTHS,
-      datasets:[
-        { label:'ปี 2568', data: u.m68.map(v=>Math.round(v)), backgroundColor:'rgba(168,196,184,0.55)', borderColor: COL68, borderWidth:1.5, borderRadius:5 },
-        { label:'ปี 2569', data: u.m69.map(v=>Math.round(v)), backgroundColor: getBgColor(u.pct)+'BB', borderColor: getBarColor(u.pct), borderWidth:1.5, borderRadius:5 },
-        { label:'เป้าหมาย', data: u.m68.map(v=>Math.round(v*0.85)), type:'line', borderColor: COL_TARGET, borderDash:[5,4], borderWidth:1.5, pointRadius:0, fill:false }
+  // Chart: Avg days line (straight)
+  destroyChart('cAvgDays');
+  chartInstances['cAvgDays'] = new Chart(document.getElementById('cAvgDays'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: 'รวมทั้งหมด',       data: months.map(k => avg(mMap[k].daysArr)), borderColor:'#6b9de8', backgroundColor:'rgba(107,157,232,0.1)', tension:0, fill:true, pointRadius:4 },
+        { label: 'แจ้ง→ตรวจสอบ',    data: months.map(k => avg(mMap[k].s1)),     borderColor:'#a8d8a8', backgroundColor:'transparent', tension:0, pointRadius:3 },
+        { label: 'ติดต่อช่าง→เริ่มงาน', data: months.map(k => avg(mMap[k].s3)),  borderColor:'#ffd08a', backgroundColor:'transparent', tension:0, pointRadius:3, borderDash:[4,2] },
       ]
     },
-    options:{
-      ...CHART_OPTS,
-      plugins:{
-        ...CHART_OPTS.plugins,
-        legend:{ display:true, position:'top', labels:{ font:{size:11}, color:'#8A7F78', boxWidth:11, padding:10 } }
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { labels: { font:{size:10} } },
+        topLabel: { display: true, suffix: ' วัน', fontSize: 10, offset: 5, useDatasetColor: true }
       },
-      scales:{
-        x:{ grid:{display:false}, ticks:{color:'#8A7F78', font:{size:11}} },
-        y:{ grid:{color:'#F0EBE4'}, ticks:{color:'#8A7F78', font:{size:11}, callback:v=>v.toLocaleString()} }
+      scales: {
+        x: { ticks: TICK },
+        y: { beginAtZero: true, ticks: { ...TICK }, title: { display: true, text: 'วัน', font:{size:10} } }
       }
     }
   });
-}
 
-function selectSso(filter, btn) {
-  document.querySelectorAll('#sso .filter-btn').forEach(b=>b.className='filter-btn');
-  btn.className='filter-btn on';
-  buildSsoMini(filter);
-  if (ssoDetailChart) { ssoDetailChart.destroy(); ssoDetailChart=null; }
-  document.getElementById('ssoDetailTitle').textContent = 'กราฟรายเดือน — คลิกการ์ดด้านบนเพื่อดูรายละเอียด';
-}
-
-// ══════════════════════════════════════════════
-// PAGE 4: COMPARE
-// ══════════════════════════════════════════════
-let compareChart = null;
-
-function buildCompare(filter='all') {
-  const data = filter==='all' ? units : filter==='hosp' ? units.filter(u=>u.type==='รพ.') : units.filter(u=>u.type!=='รพ.');
-  const sorted = [...data].sort((a,b)=>a.pct-b.pct);
-  const h = Math.max(400, sorted.length * 40 + 80);
-  document.getElementById('compareWrap').style.height = h+'px';
-  if (compareChart) compareChart.destroy();
-  compareChart = new Chart(document.getElementById('compareChart'), {
-    type:'bar',
-    data:{
-      labels: sorted.map(u=>u.name),
-      datasets:[{
-        label:'% เปลี่ยนแปลง',
-        data: sorted.map(u=>parseFloat(u.pct.toFixed(1))),
-        backgroundColor: sorted.map(u=>getBgColor(u.pct)),
-        borderColor: sorted.map(u=>getBarColor(u.pct)),
-        borderWidth:1.5, borderRadius:4
-      }]
+  // Chart: Type bar
+  const typeMap = {};
+  allData.forEach(d => {
+    const t = (d['เรื่องแจ้งซ่อม']||'อื่นๆ').includes('ไม่ใช่') ? 'ไม่ใช่ครุภัณฑ์' : 'ครุภัณฑ์';
+    typeMap[t] = (typeMap[t]||0) + 1;
+  });
+  destroyChart('cType');
+  chartInstances['cType'] = new Chart(document.getElementById('cType'), {
+    type: 'bar',
+    data: {
+      labels: Object.keys(typeMap),
+      datasets: [{ label: 'จำนวน', data: Object.values(typeMap), backgroundColor: ['#90c2e7','#ce93d8'] }]
     },
-    options:{
-      indexAxis:'y',
-      ...CHART_OPTS,
-      plugins:{
-        ...CHART_OPTS.plugins,
-        tooltip:{
-          ...CHART_OPTS.plugins.tooltip,
-          callbacks:{ label: ctx => ` ${ctx.parsed.x>0?'+':''}${ctx.parsed.x.toFixed(1)}%` }
+    options: { responsive: true, indexAxis:'y', plugins: { legend:{display:false} }, scales: { x:{ ticks:{...TICK, stepSize:1}, beginAtZero:true } } }
+  });
+
+  // Chart: Success rate by type (grouped bar)
+  const typeSuccessMap = {};
+  allData.forEach(d => {
+    const t = (d['เรื่องแจ้งซ่อม']||'อื่นๆ').includes('ไม่ใช่') ? 'ไม่ใช่ครุภัณฑ์' : 'ครุภัณฑ์';
+    if (!typeSuccessMap[t]) typeSuccessMap[t] = { done:0, inprog:0, esc:0, total:0 };
+    typeSuccessMap[t].total++;
+    if (d.status === 'ดำเนินการแก้ไขแล้ว') typeSuccessMap[t].done++;
+    else if (d.status === 'กำลังดำเนินการ')  typeSuccessMap[t].inprog++;
+    else if (d.status.includes('ส่งเรื่องต่อ')) typeSuccessMap[t].esc++;
+  });
+  const tsLabels = Object.keys(typeSuccessMap);
+  destroyChart('cTypeSuccess');
+  chartInstances['cTypeSuccess'] = new Chart(document.getElementById('cTypeSuccess'), {
+    type: 'bar',
+    data: {
+      labels: tsLabels,
+      datasets: [
+        {
+          label: 'แก้ไขแล้ว (%)',
+          data: tsLabels.map(t => typeSuccessMap[t].total > 0
+            ? +(typeSuccessMap[t].done / typeSuccessMap[t].total * 100).toFixed(1) : 0),
+          backgroundColor: '#a8d8a8', borderRadius: 6,
         },
-        annotation:{
-          annotations:{
-            target:{ type:'line', xMin:-15, xMax:-15, borderColor: COL_TARGET, borderWidth:2, borderDash:[5,4] }
-          }
-        }
-      },
-      scales:{
-        x:{ grid:{color:'#F0EBE4'}, ticks:{color:'#8A7F78', font:{size:11}, callback:v=>(v>0?'+':'')+v+'%'},
-          afterDataLimits(s){ s.max=Math.max(s.max+5,20); s.min=Math.min(s.min-5,-30); } },
-        y:{ grid:{display:false}, ticks:{color:'#3D3530', font:{size:11}} }
-      }
-    }
-  });
-}
-
-function filterCompare(filter, btn) {
-  document.querySelectorAll('#compare .filter-btn').forEach(b=>b.className='filter-btn');
-  btn.className='filter-btn on';
-  buildCompare(filter);
-}
-
-// All-line chart (page 4)
-const palette = [
-  '#8FAE9A','#7BAAC4','#C4A45A','#D4889A','#9A8FC4','#8FC4B8','#C48F8F','#A4C47B',
-  '#C4B87B','#7B8FC4','#C49A7B','#B87BA8','#7BC4A0','#C4C07B','#A07BC4'
-];
-const allDS = units.slice(0,12).map((u,i) => ({
-  label: u.name,
-  data: u.m69.map((v,mi) => v),
-  borderColor: palette[i%palette.length],
-  borderWidth:1.5, pointRadius:2, tension:0.3, fill:false
-}));
-new Chart(document.getElementById('allLineChart'), {
-  type:'line',
-  data:{ labels: MONTHS, datasets: allDS },
-  options:{
-    ...CHART_OPTS,
-    plugins:{
-      ...CHART_OPTS.plugins,
-      legend:{ display:true, position:'right', labels:{ font:{size:9.5}, color:'#8A7F78', boxWidth:9, padding:5 } }
+        {
+          label: 'กำลังดำเนินการ (%)',
+          data: tsLabels.map(t => typeSuccessMap[t].total > 0
+            ? +(typeSuccessMap[t].inprog / typeSuccessMap[t].total * 100).toFixed(1) : 0),
+          backgroundColor: '#ffd08a', borderRadius: 6,
+        },
+        {
+          label: 'ส่งเรื่องต่อ (%)',
+          data: tsLabels.map(t => typeSuccessMap[t].total > 0
+            ? +(typeSuccessMap[t].esc / typeSuccessMap[t].total * 100).toFixed(1) : 0),
+          backgroundColor: '#f4a0a0', borderRadius: 6,
+        },
+      ]
     },
-    scales:{
-      x:{ grid:{color:'#F0EBE4'}, ticks:{color:'#8A7F78',font:{size:11}} },
-      y:{ grid:{color:'#F0EBE4'}, ticks:{color:'#8A7F78',font:{size:11},callback:v=>v.toLocaleString()} }
-    }
-  }
-});
-
-
-// ══════════════════════════════════════════════
-// PAGE 5: FEB vs MAR DATA
-// ══════════════════════════════════════════════
-const FM_ALL = [
-  { n:'รพ.เลาขวัญ',            type:'รพ.',  feb:565.85,  mar:1173.84, pct:107.4 },
-  { n:'รพ.ด่านมะขามเตี้ย',     type:'รพ.',  feb:332.74,  mar:652.18,  pct:96.0  },
-  { n:'สสอ.ท่ามะกา',           type:'สสอ.', feb:99.5,    mar:174.55,  pct:75.4  },
-  { n:'สสอ.ศรีสวัสดิ์',        type:'สสอ.', feb:357.5,   mar:526.88,  pct:47.4  },
-  { n:'สสอ.สังขละบุรี',         type:'สสอ.', feb:188.04,  mar:269.14,  pct:43.1  },
-  { n:'รพ.เจ้าคุณไพบูลย์',     type:'รพ.',  feb:491.37,  mar:671.35,  pct:36.6  },
-  { n:'รพ.หนองปรือ',           type:'รพ.',  feb:1885.43, mar:2545.02, pct:35.0  },
-  { n:'รพ.พหลพลพยุหเสนา',     type:'รพ.',  feb:3762.88, mar:4870.77, pct:29.4  },
-  { n:'สสอ.บ่อพลอย',           type:'สสอ.', feb:106.55,  mar:135.42,  pct:27.1  },
-  { n:'รพ.สมเด็จฯปิยมหาราช',   type:'รพ.',  feb:1931.36, mar:2431.89, pct:25.9  },
-  { n:'รพ.บ่อพลอย',            type:'รพ.',  feb:669.56,  mar:749.36,  pct:11.9  },
-  { n:'สสจ.กาญจนบุรี',         type:'สสจ.', feb:1903.76, mar:2099.93, pct:10.3  },
-  { n:'รพ.ทองผาภูมิ',          type:'รพ.',  feb:1282.75, mar:1386.61, pct:8.1   },
-  { n:'สสอ.ทองผาภูมิ',         type:'สสอ.', feb:327.9,   mar:340.73,  pct:3.9   },
-  { n:'รพ.สมเด็จฯ องค์ที่19',  type:'รพ.',  feb:905.2,   mar:937.22,  pct:3.5   },
-  { n:'รพ.มะการักษ์',          type:'รพ.',  feb:1331.83, mar:1351.0,  pct:1.4   },
-  { n:'สสอ.หนองปรือ',          type:'สสอ.', feb:13.06,   mar:12.6,    pct:-3.5  },
-  { n:'รพ.ห้วยกระเจา',         type:'รพ.',  feb:590.31,  mar:577.12,  pct:-2.2  },
-  { n:'รพ.สังขละบุรี',          type:'รพ.',  feb:4975.18, mar:4610.65, pct:-7.3  },
-  { n:'สสอ.ห้วยกระเจา',        type:'สสอ.', feb:148.9,   mar:114.48,  pct:-23.1 },
-  { n:'สสอ.ไทรโยค',            type:'สสอ.', feb:430.53,  mar:330.99,  pct:-23.1 },
-  { n:'รพ.พระบารมี',           type:'รพ.',  feb:456.45,  mar:307.61,  pct:-32.6 },
-  { n:'สสอ.ท่าม่วง',           type:'สสอ.', feb:109.78,  mar:64.68,   pct:-41.1 },
-  { n:'รพ.ศุกร์ศิริฯ',         type:'รพ.',  feb:708.85,  mar:372.65,  pct:-47.4 },
-  { n:'สสอ.พนมทวน',            type:'สสอ.', feb:66.34,   mar:31.9,    pct:-51.9 },
-  { n:'รพ.ท่ากระดาน',          type:'รพ.',  feb:499.9,   mar:234.72,  pct:-53.0 },
-  { n:'รพ.ไทรโยค',             type:'รพ.',  feb:744.2,   mar:304.63,  pct:-59.1 },
-];
-
-let fmChart = null;
-
-function fmBarColor(pct) { return pct >= 0 ? 'rgba(212,136,154,0.5)' : 'rgba(143,174,154,0.5)'; }
-function fmBorderColor(pct) { return pct >= 0 ? '#D4889A' : '#8FAE9A'; }
-
-function buildFM(data) {
-  const h = Math.max(500, data.length * 40 + 80);
-  document.getElementById('fmWrap').style.height = h + 'px';
-  if (fmChart) fmChart.destroy();
-  fmChart = new Chart(document.getElementById('fmChart'), {
-    type:'bar',
-    data:{
-      labels: data.map(d=>d.n),
-      datasets:[{
-        label:'% เปลี่ยน ก.พ.→มี.ค.',
-        data: data.map(d=>parseFloat(d.pct.toFixed(1))),
-        backgroundColor: data.map(d=>fmBarColor(d.pct)),
-        borderColor: data.map(d=>fmBorderColor(d.pct)),
-        borderWidth:1.5, borderRadius:5
-      }]
-    },
-    options:{
-      indexAxis:'y', responsive:true, maintainAspectRatio:false,
-      plugins:{
-        legend:{display:false},
-        tooltip:{
-          backgroundColor:'#FFFCF9', titleColor:'#3D3530', bodyColor:'#5A5250',
-          borderColor:'#E8E2DA', borderWidth:1, padding:10, cornerRadius:8,
-          callbacks:{
-            label: ctx => {
-              const d = data[ctx.dataIndex];
-              const sign = d.pct>=0?'+':'';
-              return [
-                ` ก.พ. 69: ${Math.round(d.feb).toLocaleString()} ลิตร`,
-                ` มี.ค. 69: ${Math.round(d.mar).toLocaleString()} ลิตร`,
-                ` เปลี่ยน: ${sign}${d.pct.toFixed(1)}%`
-              ];
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { labels: { font:{size:11} } },
+        topLabel: { display: true, suffix: '%', fontSize: 11, offset: 5, useDatasetColor: true, skipZero: true },
+        tooltip: {
+          callbacks: {
+            afterBody: (items) => {
+              const t = items[0]?.label;
+              if (!t || !typeSuccessMap[t]) return '';
+              return `รวมทั้งหมด: ${typeSuccessMap[t].total} รายการ`;
             }
           }
         }
       },
-      scales:{
-        x:{ grid:{color:'#F0EBE4'}, ticks:{color:'#8A7F78', font:{size:11}, callback:v=>(v>0?'+':'')+v+'%'},
-          afterDataLimits(s){ s.max=Math.max(s.max+10,20); s.min=Math.min(s.min-10,-20); } },
-        y:{ grid:{display:false}, ticks:{color:'#3D3530', font:{size:11.5}} }
+      scales: {
+        x: { ticks: TICK },
+        y: {
+          min: 0, max: 100,
+          ticks: { ...TICK, callback: v => v + '%' },
+          title: { display: true, text: 'อัตรา (%)', font:{size:10} }
+        }
+      }
+    }
+  });
+
+  // Chart: Dept top bar
+  const deptMap = {};
+  allData.forEach(d => { const dep = d['แผนก / สถานที่ ที่เจอปัญหา']||'ไม่ระบุ'; deptMap[dep] = (deptMap[dep]||0)+1; });
+  const topDept = Object.entries(deptMap).sort((a,b) => b[1]-a[1]).slice(0,6);
+  destroyChart('cDept');
+  chartInstances['cDept'] = new Chart(document.getElementById('cDept'), {
+    type: 'bar',
+    data: {
+      labels: topDept.map(d=>d[0]),
+      datasets: [{ label: 'จำนวน', data: topDept.map(d=>d[1]), backgroundColor: '#a8d8a8' }]
+    },
+    options: { responsive: true, indexAxis:'y', plugins: { legend:{display:false} }, scales: { x:{ ticks:{...TICK, stepSize:1}, beginAtZero:true } } }
+  });
+
+  // Chart: Success rate line
+  destroyChart('cSuccess');
+  chartInstances['cSuccess'] = new Chart(document.getElementById('cSuccess'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'อัตราสำเร็จ (%)',
+        data: months.map(k => {
+          const m = mMap[k];
+          return m.total > 0 ? +(m.done / m.total * 100).toFixed(1) : 0;
+        }),
+        borderColor: '#5bb85d',
+        backgroundColor: 'rgba(91,184,93,0.1)',
+        tension: 0,
+        fill: true,
+        pointRadius: 5,
+        pointBackgroundColor: '#5bb85d',
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { labels: { font:{size:10} } },
+        topLabel: { display: true, suffix: '%', fontSize: 11, offset: 6, color: '#2a7a2a' }
+      },
+      scales: {
+        x: { ticks: TICK },
+        y: { min:0, max:100, ticks: { ...TICK, callback: v => v+'%' }, title: { display:true, text:'%', font:{size:10} } }
       }
     }
   });
 }
 
-function buildFMTables() {
-  const dec = FM_ALL.filter(d=>d.pct<0).sort((a,b)=>a.pct-b.pct);
-  const inc = FM_ALL.filter(d=>d.pct>=0).sort((a,b)=>b.pct-a.pct);
-  const rowStyle = 'display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:0.5px solid #F2EDE7;font-size:12px;';
-  document.getElementById('fmDecTable').innerHTML = dec.map(d=>
-    `<div style="${rowStyle}"><span style="color:#3D3530;">${d.n}</span><span style="color:#8FAE9A;font-weight:500;">${d.pct.toFixed(1)}%</span></div>`
-  ).join('');
-  document.getElementById('fmIncTable').innerHTML = inc.map(d=>
-    `<div style="${rowStyle}"><span style="color:#3D3530;">${d.n}</span><span style="color:#D4889A;font-weight:500;">+${d.pct.toFixed(1)}%</span></div>`
-  ).join('');
+/* =================== POPULATE DROPDOWNS =================== */
+function populateDropdowns() {
+  const months = [...new Set(allData.map(d => d.mKey).filter(Boolean))].sort();
+  const mSel = document.getElementById('fMonth');
+  months.forEach(m => {
+    const d = allData.find(x => x.mKey === m);
+    mSel.innerHTML += `<option value="${m}">${d.mLbl}</option>`;
+  });
+
+  const types = [...new Set(allData.map(d => d['เรื่องแจ้งซ่อม']).filter(Boolean))];
+  const tSel = document.getElementById('fType');
+  types.forEach(t => {
+    const lbl = t.includes('ไม่ใช่') ? 'ไม่ใช่ครุภัณฑ์' : 'ครุภัณฑ์';
+    tSel.innerHTML += `<option value="${t}">${lbl}</option>`;
+  });
+
+  const depts = [...new Set(allData.map(d => d['แผนก / สถานที่ ที่เจอปัญหา']).filter(Boolean))].sort();
+  const dSel = document.getElementById('fDept');
+  depts.forEach(dep => { dSel.innerHTML += `<option value="${dep}">${dep}</option>`; });
 }
 
-function filterFM(filter, btn) {
-  document.querySelectorAll('#febmar .filter-btn').forEach(b=>b.className='filter-btn');
-  btn.className='filter-btn on';
-  const data = filter==='all' ? FM_ALL
-    : filter==='hosp' ? FM_ALL.filter(d=>d.type==='รพ.')
-    : FM_ALL.filter(d=>d.type!=='รพ.');
-  buildFM(data);
+/* =================== RESPONSE EXTRACTOR =================== */
+// callMcpTool can return many formats — handle all of them
+function extractText(res) {
+  if (!res) return '';
+
+  // Helper: try JSON.parse for fileContent / content / text keys
+  function tryJson(s) {
+    if (typeof s !== 'string') return s;
+    try {
+      const p = JSON.parse(s);
+      if (p && typeof p === 'object') {
+        const v = p.fileContent || p.content || p.text || p.data || '';
+        if (v) return v;
+      }
+    } catch {}
+    return s;
+  }
+
+  // Array of content-blocks [{type:'text', text:'...'}]
+  if (Array.isArray(res)) {
+    const joined = res.map(b => {
+      if (!b) return '';
+      if (b.type === 'text') return b.text || '';
+      if (typeof b === 'string') return b;
+      return b.content || b.text || b.fileContent || '';
+    }).join('');
+    return tryJson(joined) || joined;
+  }
+
+  // Plain string (JSON wrapper or raw table)
+  if (typeof res === 'string') return tryJson(res);
+
+  // Object — if .content is an array of blocks, recurse into it
+  if (Array.isArray(res.content)) return extractText(res.content);
+
+  // Direct string keys
+  const direct = res.fileContent || res.text || res.data || '';
+  if (direct) return tryJson(direct) || direct;
+
+  // Last resort: find longest string value in the object
+  const best = Object.values(res)
+    .filter(v => typeof v === 'string' && v.length > 30)
+    .sort((a, b) => b.length - a.length)[0] || '';
+  return tryJson(best) || best;
 }
 
-
-// ══════════════════════════════════════════════
-// TABS
-// ══════════════════════════════════════════════
-function showPage(id, tab) {
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  tab.classList.add('active');
-  if (id==='hosp' && document.getElementById('hospMiniGrid').innerHTML==='') buildHospMini();
-  if (id==='sso'  && document.getElementById('ssoMiniGrid').innerHTML==='')  buildSsoMini();
-  if (id==='compare' && !compareChart) buildCompare();
-  if (id==='febmar' && !fmChart) { buildFM(FM_ALL); buildFMTables(); }
+/* =================== CSV PARSER (fallback) =================== */
+function parseCSV(csv) {
+  const lines = csv.split('\n').filter(l => l.trim());
+  if (lines.length < 2) return [];
+  const splitLine = l => {
+    const cells = []; let cur = '', inQ = false;
+    for (const c of l) {
+      if (c === '"') { inQ = !inQ; }
+      else if (c === ',' && !inQ) { cells.push(cur.trim()); cur = ''; }
+      else cur += c;
+    }
+    cells.push(cur.trim());
+    return cells;
+  };
+  const headers = splitLine(lines[0]);
+  return lines.slice(1).map(l => {
+    const cells = splitLine(l);
+    const obj = {};
+    headers.forEach((h, i) => { obj[h] = cells[i] || ''; });
+    return obj;
+  });
 }
 
-// Init hosp mini
-buildHospMini();
-buildSsoMini();
-buildCompare();
+/* =================== MAIN LOAD =================== */
+async function loadData() {
+  const FILE_ID = '1JrVY0MHVRq4eAyi-fjKQVRW7LCz8v2vJlQpwm41Iy6E';
+
+  const setErr = msg => {
+    document.getElementById('lastUpdate').textContent = msg;
+    document.getElementById('mainTbody').innerHTML = `<tr><td colspan="9" class="no-data-row">${msg}</td></tr>`;
+    document.getElementById('escalateArea').innerHTML = `<div class="empty-msg">${msg}</div>`;
+  };
+
+  try {
+    document.getElementById('lastUpdate').textContent = 'กำลังโหลดจาก Google Drive...';
+
+    /* --- Attempt 1: read_file_content (markdown table) --- */
+    let rows = [];
+    let debugInfo = '';
+    try {
+      const res1 = await window.cowork.callMcpTool(
+        'mcp__2ab58198-5cf1-41c3-ad51-21c43099d588__read_file_content',
+        { fileId: FILE_ID }
+      );
+      debugInfo = 'type:' + typeof res1 + ' | ' + JSON.stringify(res1).slice(0, 200);
+      console.log('read_file_content raw:', debugInfo);
+      const text1 = extractText(res1);
+      console.log('extracted text1 (first 200):', text1.slice(0, 200));
+      if (text1 && text1.includes('|')) {
+        rows = parseMarkdown(text1);
+        console.log('Parsed from markdown:', rows.length, 'rows');
+      } else if (text1 && text1.includes(',')) {
+        rows = parseCSV(text1);
+        console.log('Parsed as CSV:', rows.length, 'rows');
+      }
+    } catch (e1) {
+      debugInfo += ' | err:' + e1.message;
+      console.warn('read_file_content failed:', e1.message);
+    }
+
+    /* --- Attempt 2: download_file_content as CSV (if Attempt 1 gave nothing) --- */
+    if (!rows.length) {
+      console.log('Trying download_file_content as CSV...');
+      try {
+        const res2 = await window.cowork.callMcpTool(
+          'mcp__2ab58198-5cf1-41c3-ad51-21c43099d588__download_file_content',
+          { fileId: FILE_ID, exportMimeType: 'text/csv' }
+        );
+        debugInfo += ' | dl:' + JSON.stringify(res2).slice(0, 150);
+        console.log('download_file_content raw:', JSON.stringify(res2).slice(0, 300));
+        const raw2 = extractText(res2);
+        let csvText = '';
+        try { csvText = atob(raw2); } catch { csvText = raw2; }
+        if (csvText && csvText.length > 10) {
+          rows = parseCSV(csvText);
+          console.log('Parsed from CSV download:', rows.length, 'rows');
+        }
+      } catch (e2) {
+        debugInfo += ' | dl_err:' + e2.message;
+        console.warn('download_file_content failed:', e2.message);
+      }
+    }
+
+    if (!rows.length) {
+      throw new Error(
+        'ไม่สามารถดึงข้อมูลได้ — กรุณากดปุ่ม Reload 🔄 อีกครั้ง\n[debug: ' + debugInfo.slice(0, 180) + ']'
+      );
+    }
+
+    allData = processData(rows);
+    populateDropdowns();
+
+    const now = new Date().toLocaleString('th-TH', { dateStyle:'short', timeStyle:'short' });
+    document.getElementById('lastUpdate').textContent =
+      `อัปเดตล่าสุด: ${now} • ทั้งหมด ${allData.length} รายการ`;
+
+    renderMonthSummary();
+    renderPane0();
+    renderPane1();
+
+  } catch (err) {
+    console.error('loadData error:', err);
+    setErr(`⚠️ ${err.message}`);
+  }
+}
+
+loadData();
 </script>
-
-<!-- ════════════════════════════════ -->
-<!-- PAGE 5: FEB vs MAR -->
-<!-- ════════════════════════════════ -->
-<div id="febmar" class="content page">
-
-  <div class="kpi-row">
-    <div class="kpi"><div class="kpi-lbl">ก.พ. 2569 รวม</div><div class="kpi-val" style="color:var(--sky)">31,025</div><div class="kpi-sub">ลิตร ทุกหน่วย</div></div>
-    <div class="kpi"><div class="kpi-lbl">มี.ค. 2569 รวม</div><div class="kpi-val" style="color:var(--sage)">33,607</div><div class="kpi-sub">ลิตร ทุกหน่วย</div></div>
-    <div class="kpi"><div class="kpi-lbl">% เปลี่ยน ก.พ.→มี.ค.</div><div class="kpi-val" style="color:var(--amber)">+8.3%</div><div class="kpi-sub">เพิ่มขึ้น (สิ้นไตรมาส)</div></div>
-    <div class="kpi"><div class="kpi-lbl">หน่วยที่ลดลง</div><div class="kpi-val" style="color:var(--sage)">11</div><div class="kpi-sub">จาก 27 หน่วย (41%)</div></div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">% เปลี่ยนแปลง มีนาคม เทียบกับ กุมภาพันธ์ 2569 — รายหน่วยบริการ</div>
-    <div class="card-sub">สีเขียว = ลดลง (ดี) | สีชมพู = เพิ่มขึ้น | hover เพื่อดูตัวเลขลิตร</div>
-    <div class="filter-wrap" style="margin-top:4px;">
-      <button class="filter-btn on" onclick="filterFM('all',this)">ทั้งหมด (27)</button>
-      <button class="filter-btn" onclick="filterFM('hosp',this)">โรงพยาบาล (17)</button>
-      <button class="filter-btn" onclick="filterFM('sso',this)">สสอ. (10)</button>
-    </div>
-    <div style="display:flex; gap:16px; margin-bottom:10px; flex-wrap:wrap;">
-      <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);"><span style="width:11px;height:11px;border-radius:3px;background:#8FAE9A;display:inline-block;"></span>ลดลง ก.พ.→มี.ค.</span>
-      <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);"><span style="width:11px;height:11px;border-radius:3px;background:#D4889A;display:inline-block;"></span>เพิ่มขึ้น ก.พ.→มี.ค.</span>
-    </div>
-    <div class="ch" id="fmWrap" style="height:1100px;"><canvas id="fmChart" role="img" aria-label="% เปลี่ยนแปลง ก.พ. เทียบ มี.ค. รายหน่วย">% เปลี่ยนแปลง ก.พ.→มี.ค.</canvas></div>
-  </div>
-
-  <div class="g2">
-    <div class="card">
-      <div class="card-title" style="color:#8FAE9A;">หน่วยที่ลดลง (11 หน่วย)</div>
-      <div style="margin-top:8px;" id="fmDecTable"></div>
-    </div>
-    <div class="card">
-      <div class="card-title" style="color:#D4889A;">หน่วยที่เพิ่มขึ้น (16 หน่วย)</div>
-      <div style="margin-top:8px;" id="fmIncTable"></div>
-    </div>
-  </div>
-
-</div>
-
 </body>
 </html>
