@@ -178,8 +178,7 @@ tbody tr:hover { background: #f8faff; }
     </div>
   </div>
 
-  <div id="debugBox" style="display:none;background:#fffde7;border:1px solid #ffd54f;border-radius:10px;padding:12px 16px;margin:8px 16px;font-size:12px;line-height:1.8;color:#333"></div>
-<div id="kpiArea" class="kpi-row">
+  <div id="kpiArea" class="kpi-row">
     <div class="kpi"><div class="num c-blue">—</div><div class="lbl">ทั้งหมด</div></div>
   </div>
 
@@ -366,24 +365,27 @@ function showTab(idx) {
 /* =================== DATE UTILITIES =================== */
 function parseDate(s) {
   if (!s || !s.trim()) return null;
-  const str = s.trim().split(' ')[0]; // strip time part e.g. "5/13/2026 10:30:00"
+  const str = s.trim().split(' ')[0]; // strip time "5/13/2026 15:10:37" → "5/13/2026"
   const p = str.split('/');
   if (p.length === 3) {
     let a = +p[0], b = +p[1], c = +p[2];
-    // Convert Buddhist Era to CE (Thai year > 2500)
-    if (c > 2500) c -= 543;
-    if (a > 2500) a -= 543; // year in first position
-    // Detect D/M/YYYY (Thai style: first number > 12 must be day)
     let month, day, year;
-    if (a > 31) { year = a; month = b; day = c; }       // YYYY/M/D
-    else if (c > 31 || c === 0) return null;             // bad year
-    else if (a > 12) { day = a; month = b; year = c; }  // D/M/YYYY
-    else { month = a; day = b; year = c; }               // M/D/YYYY (Apps Script default)
-    if (year < 100) year += 2000;
+    if (a > 100) {
+      // YYYY/M/D  (year first)
+      year = a; month = b; day = c;
+    } else if (c > 100) {
+      // M/D/YYYY or D/M/YYYY (year last — Apps Script default: M/D/YYYY)
+      year = c;
+      if (a > 12) { day = a; month = b; }  // D/M/YYYY (day > 12 → must be day)
+      else         { month = a; day = b; }  // M/D/YYYY
+    } else {
+      return null; // no recognizable year
+    }
+    if (year > 2500) year -= 543; // Buddhist Era → CE
+    if (year < 100)  year += 2000;
     const d = new Date(year, month - 1, day);
     return isNaN(d) ? null : d;
   }
-  // Try ISO or other formats
   const d = new Date(str);
   return isNaN(d) ? null : d;
 }
@@ -1150,17 +1152,6 @@ async function loadData() {
       }
     }
 
-    // Debug: show first row on page so we can see actual column names
-    if (rows.length > 0) {
-      const dbg = document.getElementById('debugBox');
-      if (dbg) {
-        const keys = Object.keys(rows[0]);
-        const sample = rows[0];
-        dbg.innerHTML = '<b>🔍 DEBUG — คอลัมน์จาก Apps Script:</b><br>' +
-          keys.map(k => `<span style="color:#555">${k}</span> = <b>${sample[k]||'(ว่าง)'}</b>`).join('<br>');
-        dbg.style.display = 'block';
-      }
-    }
     allData = processData(rows);
     populateDropdowns();
 
