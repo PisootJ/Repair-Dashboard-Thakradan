@@ -980,7 +980,7 @@ function parseCSV(csv) {
 
 /* =================== CONFIG =================== */
 // หลังติดตั้ง Google Apps Script แล้ว วาง URL ที่นี่:
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbypO4xrR_68btntZJOFjZaV6XrK44uh50eZd8WT2wW_ZZepB7VFwljdqXcgaq-ViPs/exec';
+const APPS_SCRIPT_URL = '';
 // ตัวอย่าง: 'https://script.google.com/macros/s/AKfy.../exec'
 
 /* =================== MAIN LOAD =================== */
@@ -1037,21 +1037,20 @@ async function loadData() {
     } else {
       document.getElementById('lastUpdate').textContent = 'กำลังโหลดข้อมูล...';
 
-      /* -- B1: Apps Script URL (หากตั้งค่าแล้ว) -- */
+      /* -- B1: Apps Script URL -- */
       if (APPS_SCRIPT_URL) {
+
+        /* B1a: JSON fetch (ปกติ) */
         try {
-          const resp = await fetch(APPS_SCRIPT_URL);
+          const resp = await fetch(APPS_SCRIPT_URL, { redirect: 'follow' });
           if (resp.ok) {
-            const json = await resp.json();
-            if (json.rows && json.rows.length) {
-              rows = json.rows;
-              console.log('Loaded from Apps Script:', rows.length, 'rows');
+            const txt = await resp.text();
+            console.log('Apps Script raw (first 300):', txt.slice(0,300));
+            if (txt.trim().startsWith('{') || txt.trim().startsWith('[')) {
+              const json = JSON.parse(txt);
+              if (json.rows && json.rows.length) { rows = json.rows; }
             }
           }
-        } catch (e) { console.warn('Apps Script fetch failed:', e.message); }
-      }
+        } catch (e1) { console.warn('B1a fetch failed:', e1.message); }
 
-      /* -- B2: Google Sheets direct CSV (fallback / ถ้ายังไม่มี Apps Script) -- */
-      if (!rows.length) {
-        const csvUrls = [
-          `https://docs.google
+        /* B1b: JSONP fallback (เมื่อ CORS บล็อก 
