@@ -1192,7 +1192,8 @@ async function loadData() {
       }
     }
 
-    allData = processData(rows);
+    // กรองเฉพาะ row ที่มีสถานะ — ยังไม่ระบุสถานะ = ยังไม่ต้องนับ
+    allData = processData(rows.filter(r => (r['สถานะ'] || '').trim() !== ''));
     populateDropdowns();
 
     const now = new Date().toLocaleString('th-TH', { dateStyle:'short', timeStyle:'short' });
@@ -1257,12 +1258,4 @@ function renderAvgDaysChart() {
         tooltip: { callbacks: { label: item => item.raw !== null ? item.raw + ' วัน' : 'ยังไม่มีข้อมูล' } }
       },
       scales: {
-        x: { ticks: TICK },
-        y: { beginAtZero: true, ticks: { ...TICK, callback: v => v + ' วัน' }, title: { display: true, text: 'วันเฉลี่ย', font:{size:10} } }
-      }
-    }
-  });
-}
-</script>
-</body>
-</html>
+        x: { ticks: TIC
