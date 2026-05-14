@@ -461,14 +461,23 @@ function processData(rows) {
   return rows.map((r, idx) => {
     // Try multiple column name variations for each date field
     const reportDate  = parseDate(findCol(r, 'วันที่แจ้งซ่อม', 'Timestamp', 'วันที่แจ้ง', 'วันที่'));
-    // resolveDate = วันที่ช่างภายในประเมิน (= วันที่ได้รับการแก้ไข หรือแก้ไขไม่ได้...)
-    const resolveDate = parseDate(findCol(r, 'วันที่ได้รับการแก้ไข', 'ประเมิน', 'วันที่แก้ไข'));
+    // resolveDate = วันที่ช่างภายในตรวจสอบ/แก้ไข
+    const resolveDate = parseDate(
+      r['วันที่ได้รับการแก้ไข หรือแก้ไขไม่ได้ต้องส่งเรื่องต่อ'] ||
+      r['วันที่ช่างภายในตรวจสอบ/แก้ไข'] || r['วันที่ช่างภายในประเมิน'] ||
+      findCol(r, 'วันที่ได้รับการแก้ไข', 'ภายในตรวจสอบ', 'ประเมิน') || '');
     // contactDate = วันที่ติดต่อช่างนอก
-    const contactDate = parseDate(findCol(r, 'วันที่ติดต่อช่างนอก', 'ติดต่อช่างนอก'));
+    const contactDate = parseDate(
+      r['วันที่ติดต่อช่างนอก'] ||
+      findCol(r, 'ติดต่อช่างนอก') || '');
     // workDate = วันที่ช่างนอกดำเนินการ
-    const workDate    = parseDate(findCol(r, 'วันที่ช่างดำเนินการ', 'ช่างนอกดำเนินการ', 'วันที่ดำเนินการ'));
+    const workDate = parseDate(
+      r['วันที่ช่างดำเนินการ'] || r['วันที่ช่างนอกดำเนินการ'] ||
+      findCol(r, 'วันที่ช่างดำเนินการ', 'ช่างนอกดำเนินการ') || '');
     // doneDate = วันที่ช่างนอกดำเนินการเสร็จ
-    const doneDate    = parseDate(findCol(r, 'วันที่ดำเนินการเสร็จ', 'ดำเนินการเสร็จ'));
+    const doneDate = parseDate(
+      r['วันที่ดำเนินการเสร็จ'] || r['วันที่ช่างนอกดำเนินการเสร็จ'] ||
+      findCol(r, 'ดำเนินการเสร็จ') || '');
     const status      = (r['สถานะ'] || '').trim();
 
     let totalDays = null;
@@ -585,12 +594,25 @@ function renderPane0() {
     <div class="kpi"><div class="num c-teal">${extCount}</div><div class="lbl">ใช้ช่างนอก</div></div>
   `;
 
-  // Days per step
-  const s1 = kBase.map(d => daysBetween(d.reportDate, d.resolveDate)).filter(x => x !== null && x >= 0);
-  const s2 = kBase.map(d => daysBetween(d.resolveDate, d.contactDate)).filter(x => x !== null && x >= 0);
-  const s3 = kBase.map(d => daysBetween(d.contactDate, d.workDate)).filter(x => x !== null && x >= 0);
-  const s4 = kBase.map(d => daysBetween(d.workDate, d.doneDate)).filter(x => x !== null && x >= 0);
-  const s5 = kBase.filter(d => d.totalDays !== null).map(d => d.totalDays).filter(x => x >= 0);
+  // Days per step — ตามเงื่อนไข:
+  // s1: วันแจ้งซ่อม → วันที่ช่างภายในตรวจสอบ/แก้ไข (เฉพาะ done)
+  const s1 = kBase.filter(d => d.status === 'ดำเนินการแก้ไขแล้ว' && d.resolveDate)
+               .map(d => daysBetween(d.reportDate, d.resolveDate))
+               .filter(x => x !== null && x >= 0);
+  // s2: วันที่ช่างภายในตรวจสอบ → วันที่ติดต่อช่างนอก
+  const s2 = kBase.filter(d => d.resolveDate && d.contactDate)
+               .map(d => daysBetween(d.resolveDate, d.contactDate))
+               .filter(x => x !== null && x >= 0);
+  // s3: วันที่ติดต่อช่างนอก → วันที่ช่างนอกดำเนินการ
+  const s3 = kBase.filter(d => d.contactDate && d.workDate)
+               .map(d => daysBetween(d.contactDate, d.workDate))
+               .filter(x => x !== null && x >= 0);
+  // s4: วันที่ช่างนอกดำเนินการ → วันที่ช่างนอกดำเนินการเสร็จ
+  const s4 = kBase.filter(d => d.workDate && d.doneDate)
+               .map(d => daysBetween(d.workDate, d.doneDate))
+               .filter(x => x !== null && x >= 0);
+  // s5: รวมทั้งหมด
+  const s5 = kBase.filter(d => d.totalDays !== null && d.totalDays >= 0).map(d => d.totalDays);
   const disp = v => v !== null ? v : '—';
 
   document.getElementById('daysArea').innerHTML = `
@@ -742,16 +764,26 @@ function renderPane2() {
     else if (d.status.includes('ส่งเรื่องต่อ')) m.esc++;
     if (d.totalDays !== null && d.totalDays >= 0) m.daysArr.push(d.totalDays);
 
-    // Rule 1: ดำเนินการแก้ไขแล้ว + resolveDate = ช่างภายในซ่อมได้
-    const isDone = d.status === 'ดำเนินการแก้ไขแล้ว';
-    const v1 = isDone ? daysBetween(d.reportDate, d.resolveDate) : null;
-    const v2 = daysBetween(d.resolveDate, d.contactDate);
-    const v3 = daysBetween(d.contactDate, d.workDate);
-    const v4 = daysBetween(d.workDate, d.doneDate);
-    if (v1 !== null && v1 >= 0) m.s1.push(v1);
-    if (v2 !== null && v2 >= 0) m.s2.push(v2);
-    if (v3 !== null && v3 >= 0) m.s3.push(v3);
-    if (v4 !== null && v4 >= 0) m.s4.push(v4);
+    // s1: แจ้งซ่อม → ช่างภายในตรวจสอบ/แก้ไข (เฉพาะ done)
+    if (d.status === 'ดำเนินการแก้ไขแล้ว' && d.resolveDate) {
+      const v1 = daysBetween(d.reportDate, d.resolveDate);
+      if (v1 !== null && v1 >= 0) m.s1.push(v1);
+    }
+    // s2: ช่างภายในตรวจสอบ → ติดต่อช่างนอก
+    if (d.resolveDate && d.contactDate) {
+      const v2 = daysBetween(d.resolveDate, d.contactDate);
+      if (v2 !== null && v2 >= 0) m.s2.push(v2);
+    }
+    // s3: ติดต่อช่างนอก → ช่างนอกดำเนินการ
+    if (d.contactDate && d.workDate) {
+      const v3 = daysBetween(d.contactDate, d.workDate);
+      if (v3 !== null && v3 >= 0) m.s3.push(v3);
+    }
+    // s4: ช่างนอกดำเนินการ → เสร็จ
+    if (d.workDate && d.doneDate) {
+      const v4 = daysBetween(d.workDate, d.doneDate);
+      if (v4 !== null && v4 >= 0) m.s4.push(v4);
+    }
   });
 
   const months = Object.keys(mMap).sort();
