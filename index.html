@@ -1074,42 +1074,44 @@ function switchTab(n,btn){
 }
 
 // ── LOAD DATA ─────────────────────────────────
+const GS_CSV_URL = `https://docs.google.com/spreadsheets/d/${FILE_ID}/export?format=csv`;
+
 async function loadData() {
   const setStatus=msg=>{document.getElementById('last-update').textContent=msg;};
   setStatus('กำลังโหลดจาก Google Drive...');
   let rows=[];
-  try {
-    const res1=await window.cowork.callMcpTool(TOOL_READ,{fileId:FILE_ID});
-    console.log('read_file raw:',JSON.stringify(res1).slice(0,200));
-    const text1=extractText(res1);
-    if(text1&&text1.includes('|')) rows=parseMarkdown(text1);
-    else if(text1&&text1.includes(',')) rows=parseCSV(text1);
-    console.log('markdown rows:',rows.length);
-  } catch(e1){ console.warn('read_file_content failed:',e1.message); }
 
+  // ── ทางที่ 1: Cowork MCP (ใช้ได้เฉพาะใน Claude App) ──
+  if(typeof window.cowork !== 'undefined') {
+    try {
+      const res1=await window.cowork.callMcpTool(TOOL_READ,{fileId:FILE_ID});
+      console.log('read_file raw:',JSON.stringify(res1).slice(0,200));
+      const text1=extractText(res1);
+      if(text1&&text1.includes('|')) rows=parseMarkdown(text1);
+      else if(text1&&text1.includes(',')) rows=parseCSV(text1);
+      console.log('markdown rows:',rows.length);
+    } catch(e1){ console.warn('read_file_content failed:',e1.message); }
+
+    if(!rows.length){
+      try {
+        const res2=await window.cowork.callMcpTool(TOOL_DL,{fileId:FILE_ID,exportMimeType:'text/csv'});
+        console.log('dl raw:',JSON.stringify(res2).slice(0,200));
+        const raw2=extractText(res2); let csvText='';
+        try{csvText=atob(raw2);}catch{csvText=raw2;}
+        if(csvText&&csvText.length>10) rows=parseCSV(csvText);
+        console.log('csv rows:',rows.length);
+      } catch(e2){ console.warn('download failed:',e2.message); }
+    }
+  }
+
+  // ── ทางที่ 2: Direct fetch (GitHub Pages / browser โดยตรง) ──
   if(!rows.length){
     try {
-      const res2=await window.cowork.callMcpTool(TOOL_DL,{fileId:FILE_ID,exportMimeType:'text/csv'});
-      console.log('dl raw:',JSON.stringify(res2).slice(0,200));
-      const raw2=extractText(res2); let csvText='';
-      try{csvText=atob(raw2);}catch{csvText=raw2;}
-      if(csvText&&csvText.length>10) rows=parseCSV(csvText);
-      console.log('csv rows:',rows.length);
-    } catch(e2){ console.warn('download failed:',e2.message); }
-  }
-
-  if(!rows.length){
-    setStatus('⚠️ โหลดข้อมูลไม่สำเร็จ — กรุณากด Reload');
-    document.getElementById('p1-loading').innerHTML='<div style="color:#ef4444;padding:30px;text-align:center">⚠️ โหลดไม่ได้ กรุณากด Reload</div>';
-    return;
-  }
-  data=rows.map(processRow).filter(Boolean);
-  const now=new Date();
-  setStatus(`อัปเดตล่าสุด ${now.getDate()} ${TM[now.getMonth()]} ${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')} น. (${data.length} รายการ)`);
-  renderP1(); renderP2(); renderP3();
-}
-
-loadData();
-</script>
-</body>
-</html>
+      console.log('Fetching from Google Sheets CSV export...');
+      const resp = await fetch(GS_CSV_URL);
+      if(resp.ok){
+        const csvText = await resp.text();
+        if(csvText && csvText.length > 10) rows = parseCSV(csvText);
+        console.log('direct fetch rows:', rows.length);
+      }
+    } catch(e
