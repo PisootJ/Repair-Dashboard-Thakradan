@@ -1076,6 +1076,21 @@ function switchTab(n,btn){
 // ── LOAD DATA ─────────────────────────────────
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbyOLmwlLzfMfaoDLzo3H7eI4_TT4c6Q9aavyWj_-7c1Lb-XT7fh6jpci7S4uoC0x1g/exec';
 
+function fetchJSONP(url, timeoutMs=30000) {
+  return new Promise((resolve, reject) => {
+    const cbName = '_gcb_' + Date.now();
+    const el = document.createElement('script');
+    const timer = setTimeout(() => {
+      cleanup(); reject(new Error('JSONP timeout'));
+    }, timeoutMs);
+    function cleanup() { clearTimeout(timer); delete window[cbName]; el.remove(); }
+    window[cbName] = (data) => { cleanup(); resolve(data); };
+    el.onerror = () => { cleanup(); reject(new Error('JSONP load error')); };
+    el.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + cbName;
+    document.head.appendChild(el);
+  });
+}
+
 async function loadData() {
   const setStatus=msg=>{document.getElementById('last-update').textContent=msg;};
   setStatus('กำลังโหลดจาก Google Drive...');
@@ -1097,23 +1112,4 @@ async function loadData() {
         const raw2=extractText(res2); let csvText='';
         try{csvText=atob(raw2);}catch{csvText=raw2;}
         if(csvText&&csvText.length>10) rows=parseCSV(csvText);
-        console.log('cowork csv rows:',rows.length);
-      } catch(e2){ console.warn('download failed:',e2.message); }
-    }
-  }
-
-  // ── ทางที่ 2: Apps Script fetch (GitHub Pages) ──
-  if(!rows.length){
-    try {
-      console.log('Fetching via Apps Script...');
-      const resp = await fetch(GAS_URL, { redirect: 'follow' });
-      const result = await resp.json();
-      if(result && result.rows && result.rows.length) {
-        rows = result.rows;
-        console.log('GAS rows:', rows.length);
-      }
-    } catch(e3){ console.warn('GAS fetch failed:', e3.message); }
-  }
-
-  if(!rows.length){
-    setStatus('⚠️ โหลดข
+        console.log('cowor
