@@ -1074,42 +1074,43 @@ function switchTab(n,btn){
 }
 
 // ── LOAD DATA ─────────────────────────────────
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbyOLmwlLzfMfaoDLzo3H7eI4_TT4c6Q9aavyWj_-7c1Lb-XT7fh6jpci7S4uoC0x1g/exec';
+// Google Visualization API — ออกแบบมาให้ใช้ข้ามโดเมนได้ (ไม่ติด CORS)
+const GVIZ_URL = `https://docs.google.com/spreadsheets/d/${FILE_ID}/gviz/tq`;
 
-function fetchJSONP(url, timeoutMs=30000) {
+function fetchGViz(timeoutMs=25000) {
   return new Promise((resolve, reject) => {
-    const cbName = '_gcb_' + Date.now();
+    const cbName = '_gviz_' + Date.now();
     const el = document.createElement('script');
-    const timer = setTimeout(() => {
-      cleanup(); reject(new Error('JSONP timeout'));
-    }, timeoutMs);
+    const timer = setTimeout(() => { cleanup(); reject(new Error('GViz timeout')); }, timeoutMs);
     function cleanup() { clearTimeout(timer); delete window[cbName]; el.remove(); }
     window[cbName] = (data) => { cleanup(); resolve(data); };
-    el.onerror = () => { cleanup(); reject(new Error('JSONP load error')); };
-    el.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + cbName;
+    el.onerror = () => { cleanup(); reject(new Error('GViz script error')); };
+    el.src = `${GVIZ_URL}?tqx=out:json;responseHandler:${cbName}`;
     document.head.appendChild(el);
   });
 }
 
+function parseGViz(result) {
+  if(!result || !result.table) return [];
+  const cols = result.table.cols.map(c => c.label || c.id);
+  return (result.table.rows || []).map(row => {
+    const obj = {};
+    (row.c || []).forEach((cell, i) => {
+      if(!cell || cell.v === null || cell.v === undefined) { obj[cols[i]] = ''; return; }
+      // วันที่ใน GViz มาเป็น "Date(2026,3,12)" (month 0-based)
+      if(typeof cell.v === 'string' && cell.v.startsWith('Date(')) {
+        const p = cell.v.replace('Date(','').replace(')','').split(',').map(Number);
+        const d = new Date(p[0], p[1], p[2]);
+        obj[cols[i]] = (d.getMonth()+1)+'/'+d.getDate()+'/'+d.getFullYear();
+      } else if(cell.f) {
+        obj[cols[i]] = cell.f; // ใช้ formatted value ถ้ามี
+      } else {
+        obj[cols[i]] = String(cell.v);
+      }
+    });
+    return obj;
+  });
+}
+
 async function loadData() {
-  const setStatus=msg=>{document.getElementById('last-update').textContent=msg;};
-  setStatus('กำลังโหลดจาก Google Drive...');
-  let rows=[];
-
-  // ── ทางที่ 1: Cowork MCP (ใช้ได้เฉพาะใน Claude App) ──
-  if(typeof window.cowork !== 'undefined') {
-    try {
-      const res1=await window.cowork.callMcpTool(TOOL_READ,{fileId:FILE_ID});
-      const text1=extractText(res1);
-      if(text1&&text1.includes('|')) rows=parseMarkdown(text1);
-      else if(text1&&text1.includes(',')) rows=parseCSV(text1);
-      console.log('cowork markdown rows:',rows.length);
-    } catch(e1){ console.warn('read_file_content failed:',e1.message); }
-
-    if(!rows.length){
-      try {
-        const res2=await window.cowork.callMcpTool(TOOL_DL,{fileId:FILE_ID,exportMimeType:'text/csv'});
-        const raw2=extractText(res2); let csvText='';
-        try{csvText=atob(raw2);}catch{csvText=raw2;}
-        if(csvText&&csvText.length>10) rows=parseCSV(csvText);
-        console.log('cowor
+  const setStatus=msg=>{document.getElementById('last-update').textContent=ms
