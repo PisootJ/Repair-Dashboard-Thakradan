@@ -1113,4 +1113,54 @@ function parseGViz(result) {
 }
 
 async function loadData() {
-  const setStatus=msg=>{document.getElementById('last-update').textContent=ms
+  const setStatus=msg=>{document.getElementById('last-update').textContent=msg;};
+  setStatus('กำลังโหลดข้อมูล...');
+  let rows=[];
+
+  // ── ทางที่ 1: Cowork MCP (ใช้ได้เฉพาะใน Claude App ไม่ใช่ GitHub Pages) ──
+  const onGitHub = window.location.hostname.includes('github.io') || window.location.hostname.includes('github.com');
+  const isCowork = !onGitHub && typeof window.cowork !== 'undefined' && typeof window.cowork.callMcpTool === 'function';
+  if(isCowork) {
+    const withTimeout = (p, ms) => Promise.race([p, new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),ms))]);
+    try {
+      const res1=await withTimeout(window.cowork.callMcpTool(TOOL_READ,{fileId:FILE_ID}), 8000);
+      const text1=extractText(res1);
+      if(text1&&text1.includes('|')) rows=parseMarkdown(text1);
+      else if(text1&&text1.includes(',')) rows=parseCSV(text1);
+    } catch(e1){ console.warn('cowork read failed:',e1.message); }
+
+    if(!rows.length){
+      try {
+        const res2=await withTimeout(window.cowork.callMcpTool(TOOL_DL,{fileId:FILE_ID,exportMimeType:'text/csv'}), 8000);
+        const raw2=extractText(res2); let csvText='';
+        try{csvText=atob(raw2);}catch{csvText=raw2;}
+        if(csvText&&csvText.length>10) rows=parseCSV(csvText);
+      } catch(e2){ console.warn('cowork dl failed:',e2.message); }
+    }
+  }
+
+  // ── ทางที่ 2: Google Visualization API (GitHub Pages) ──
+  if(!rows.length){
+    setStatus('กำลังโหลดจาก Google Sheets...');
+    try {
+      const result = await fetchGViz(25000);
+      rows = parseGViz(result);
+      console.log('GViz rows:', rows.length);
+    } catch(eg){ console.warn('GViz failed:', eg.message); setStatus('⚠️ โหลดไม่สำเร็จ: '+eg.message); }
+  }
+
+  if(!rows.length){
+    setStatus('⚠️ โหลดข้อมูลไม่สำเร็จ — กรุณากด Reload');
+    document.getElementById('p1-loading').innerHTML='<div style="color:#ef4444;padding:30px;text-align:center">⚠️ โหลดไม่ได้ กรุณากด Reload</div>';
+    return;
+  }
+  data=rows.map(processRow).filter(Boolean);
+  const now=new Date();
+  setStatus(`อัปเดตล่าสุด ${now.getDate()} ${TM[now.getMonth()]} ${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')} น. (${data.length} รายการ)`);
+  renderP1(); renderP2(); renderP3();
+}
+
+loadData();
+</script>
+</body>
+</html>
