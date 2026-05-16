@@ -1076,36 +1076,6 @@ function switchTab(n,btn){
 // ── LOAD DATA ─────────────────────────────────
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbyOLmwlLzfMfaoDLzo3H7eI4_TT4c6Q9aavyWj_-7c1Lb-XT7fh6jpci7S4uoC0x1g/exec';
 
-// JSONP helper — ใช้ดึงข้อมูลจาก Apps Script โดยไม่ติด CORS
-function fetchJSONP(url) {
-  return new Promise((resolve, reject) => {
-    const cbName = '_cb_' + Date.now();
-    const script = document.createElement('script');
-    const timer = setTimeout(() => {
-      delete window[cbName];
-      script.remove();
-      reject(new Error('JSONP timeout'));
-    }, 15000);
-    window[cbName] = (data) => {
-      clearTimeout(timer);
-      delete window[cbName];
-      script.remove();
-      resolve(data);
-    };
-    script.src = url + '?callback=' + cbName;
-    script.onerror = () => { clearTimeout(timer); delete window[cbName]; script.remove(); reject(new Error('JSONP error')); };
-    document.head.appendChild(script);
-  });
-}
-
-// แปลง row objects (จาก Apps Script JSON) → array of row objects สำหรับ processRow
-function parseGASRows(gasRows) {
-  return gasRows.map(obj => {
-    // Apps Script คืน object {header: value} — ส่งกลับเป็น format เดิม
-    return obj;
-  });
-}
-
 async function loadData() {
   const setStatus=msg=>{document.getElementById('last-update').textContent=msg;};
   setStatus('กำลังโหลดจาก Google Drive...');
@@ -1118,4 +1088,32 @@ async function loadData() {
       const text1=extractText(res1);
       if(text1&&text1.includes('|')) rows=parseMarkdown(text1);
       else if(text1&&text1.includes(',')) rows=parseCSV(text1);
-  
+      console.log('cowork markdown rows:',rows.length);
+    } catch(e1){ console.warn('read_file_content failed:',e1.message); }
+
+    if(!rows.length){
+      try {
+        const res2=await window.cowork.callMcpTool(TOOL_DL,{fileId:FILE_ID,exportMimeType:'text/csv'});
+        const raw2=extractText(res2); let csvText='';
+        try{csvText=atob(raw2);}catch{csvText=raw2;}
+        if(csvText&&csvText.length>10) rows=parseCSV(csvText);
+        console.log('cowork csv rows:',rows.length);
+      } catch(e2){ console.warn('download failed:',e2.message); }
+    }
+  }
+
+  // ── ทางที่ 2: Apps Script fetch (GitHub Pages) ──
+  if(!rows.length){
+    try {
+      console.log('Fetching via Apps Script...');
+      const resp = await fetch(GAS_URL, { redirect: 'follow' });
+      const result = await resp.json();
+      if(result && result.rows && result.rows.length) {
+        rows = result.rows;
+        console.log('GAS rows:', rows.length);
+      }
+    } catch(e3){ console.warn('GAS fetch failed:', e3.message); }
+  }
+
+  if(!rows.length){
+    setStatus('⚠️ โหลดข
