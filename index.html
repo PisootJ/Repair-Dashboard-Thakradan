@@ -3,1259 +3,1113 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard แจ้งซ่อม รพ.ท่ากระดาน</title>
+<title>ระบบติดตามการแจ้งซ่อม รพ.ท่ากระดาน</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
 <style>
 :root { color-scheme: light; }
-* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
-body { background: #f4f6fb; color: #333; min-height: 100vh; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, -apple-system, 'Segoe UI', Tahoma, sans-serif; background: #EEF2FF; color: #374151; font-size: 14px; min-height: 100vh; }
 
-/* ===== TABS ===== */
-.tab-bar { display: flex; background: #fff; border-bottom: 2px solid #e8ecf4; padding: 0 16px; position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-.tab-btn { padding: 13px 20px; border: none; background: none; cursor: pointer; font-size: 13px; font-weight: 600; color: #9aa3b5; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.2s; }
-.tab-btn.active { color: #6b9de8; border-bottom-color: #6b9de8; }
-.tab-btn:hover { color: #6b9de8; }
+/* HEADER */
+.app-header { background: linear-gradient(135deg, #A8D8EA 0%, #C7CEEA 100%); padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
+.app-header h1 { font-size: 15px; font-weight: 700; color: #1e3a5f; }
+.app-header .subtitle { font-size: 11px; color: #4a5568; margin-top: 2px; }
 
-.tab-pane { display: none; padding: 16px; }
-.tab-pane.active { display: block; }
+/* TABS */
+.tabs-bar { display: flex; background: white; border-bottom: 2px solid #e5e7eb; padding: 0 16px; }
+.tab-btn { padding: 10px 16px; border: none; background: none; cursor: pointer; font-size: 13px; color: #6b7280; border-bottom: 3px solid transparent; margin-bottom: -2px; white-space: nowrap; font-weight: 500; }
+.tab-btn.active { color: #3b82f6; border-bottom-color: #3b82f6; font-weight: 700; }
 
-/* ===== HEADER ===== */
-.dash-header { border-radius: 14px; padding: 16px 20px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
-.dash-header h1 { font-size: 16px; font-weight: 700; }
-.dash-header .sub { font-size: 11px; margin-top: 3px; opacity: 0.75; }
-.header-blue { background: linear-gradient(120deg, #c5dcf5 0%, #d4ecd4 100%); color: #2a5298; }
-.header-red { background: linear-gradient(120deg, #ffd5d5 0%, #fde8d8 100%); color: #9c2a2a; }
-.header-purple { background: linear-gradient(120deg, #e6e0f8 0%, #daf0f0 100%); color: #4a2a8c; }
+.page { display: none; padding: 14px; }
+.page.active { display: block; }
 
-/* ===== KPI CARDS ===== */
-.kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 16px; }
-.kpi { background: #fff; border-radius: 12px; padding: 14px 12px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-.kpi .num { font-size: 38px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
-.kpi .lbl { font-size: 10px; color: #9aa3b5; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
-.kpi .sub-lbl { font-size: 9px; color: #bbb; margin-top: 2px; }
-.c-blue { color: #6b9de8; }
-.c-green { color: #5bb85d; }
-.c-orange { color: #f5a623; }
-.c-red { color: #e05c5c; }
-.c-purple { color: #9b5de5; }
-.c-teal { color: #3bb8a8; }
+/* KPI */
+.kpi-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 12px; }
+.kpi-box { background: white; border-radius: 12px; padding: 12px 10px; text-align: center; box-shadow: 0 1px 6px rgba(0,0,0,0.07); border-top: 4px solid; }
+.kpi-n { font-size: 40px; font-weight: 800; line-height: 1.1; }
+.kpi-lbl { font-size: 11px; color: #6b7280; margin-top: 4px; line-height: 1.4; }
 
-/* ===== DAYS SUMMARY ===== */
-.section-title { font-size: 12px; font-weight: 700; color: #7a8aaa; text-transform: uppercase; letter-spacing: 0.5px; margin: 4px 0 10px; }
-.days-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 16px; }
-.day-card { background: #fff; border-radius: 12px; padding: 12px 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-left: 4px solid; }
-.day-card.s1 { border-color: #90c2e7; }
-.day-card.s2 { border-color: #a8d8a8; }
-.day-card.s3 { border-color: #ffd08a; }
-.day-card.s4 { border-color: #ce93d8; }
-.day-card.s5 { border-color: #80cbc4; }
-.day-num { font-size: 30px; font-weight: 800; color: #444; }
-.day-lbl { font-size: 10px; color: #888; margin-top: 2px; line-height: 1.4; }
-.day-cnt { font-size: 9px; color: #bbb; margin-top: 2px; }
+/* CARD */
+.card { background: white; border-radius: 12px; padding: 14px; box-shadow: 0 1px 6px rgba(0,0,0,0.07); margin-bottom: 12px; }
+.card-title { font-size: 13px; font-weight: 700; color: #1f2937; margin-bottom: 10px; }
+.flex-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 
-/* ===== FILTERS ===== */
-.filter-bar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; background: #fff; padding: 10px 14px; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
-.filter-bar label { font-size: 11px; color: #7a8aaa; font-weight: 600; }
-.filter-bar select { padding: 5px 10px; border: 1px solid #dde3f0; border-radius: 8px; font-size: 12px; color: #444; background: #f9fafd; cursor: pointer; }
-.filter-bar select:focus { outline: none; border-color: #6b9de8; }
+/* CHART */
+.chart-wrap { position: relative; height: 220px; }
+.chart-wrap-sm { position: relative; height: 175px; }
+.chart-wrap-lg { position: relative; height: 210px; }
 
-/* ===== TABLE ===== */
-.tbl-wrap { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; font-size: 11px; min-width: 620px; }
-thead th { background: #eef2fb; color: #5b7ab8; font-weight: 700; padding: 9px 11px; text-align: left; white-space: nowrap; font-size: 11px; }
-tbody td { padding: 8px 11px; border-top: 1px solid #f0f3fa; color: #444; vertical-align: middle; }
-tbody tr:hover { background: #f8faff; }
-.dept-chip { display: inline-block; background: #e8eeff; color: #3a5cb8; padding: 2px 7px; border-radius: 8px; font-size: 10px; font-weight: 600; white-space: nowrap; }
-.type-chip { font-size: 10px; color: #9aa3b5; }
-.badge { display: inline-block; padding: 3px 8px; border-radius: 20px; font-size: 10px; font-weight: 700; white-space: nowrap; }
-.b-done { background: #e4f5e4; color: #2a7a2a; }
-.b-inprog { background: #fff4e0; color: #b86a00; }
-.b-esc { background: #fde8e8; color: #b82a2a; }
+/* SELECT */
+.view-select { padding: 6px 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 12px; background: #f9fafb; color: #374151; cursor: pointer; outline: none; }
 
-/* ===== TRACKING CARDS ===== */
-.track-card {
-  background: #fff; border-radius: 18px; box-shadow: 0 4px 18px rgba(0,0,0,0.09);
-  margin-bottom: 12px; border-left: 5px solid #f4a0a0; overflow: hidden;
-  transition: box-shadow 0.2s;
-}
-.track-card:hover { box-shadow: 0 6px 24px rgba(0,0,0,0.13); }
-/* Summary row — always visible, clickable */
-.track-summary {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 16px 22px; cursor: pointer; gap: 14px; user-select: none;
-}
-.track-summary:hover { background: #fdf5f5; }
-.track-title { font-size: 17px; font-weight: 800; color: #1e2d50; line-height: 1.4; }
-.track-summary-right { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
-.track-elapsed {
-  font-size: 22px; font-weight: 900; color: #fff;
-  background: linear-gradient(135deg, #e05c5c, #f59b84);
-  padding: 8px 16px; border-radius: 14px; white-space: nowrap;
-  box-shadow: 0 3px 10px rgba(224,92,92,0.3); text-align: center; line-height: 1.2;
-}
-.track-elapsed .elapsed-unit { font-size: 11px; font-weight: 600; opacity: 0.85; display: block; }
-.track-chevron {
-  font-size: 18px; color: #c0c8d8; transition: transform 0.25s; flex-shrink: 0;
-}
-.track-card.open .track-chevron { transform: rotate(180deg); }
-/* Detail panel — hidden until open */
-.track-detail {
-  display: none; padding: 0 22px 18px; border-top: 1px solid #f4e8e8;
-}
-.track-card.open .track-detail { display: block; }
-.track-meta { font-size: 13px; color: #8898b8; margin-bottom: 14px; padding-top: 12px; }
-.track-meta .dept-chip { font-size: 12px; }
-.note-box { margin-top: 14px; background: #fffbec; border-left: 4px solid #ffd08a; padding: 10px 14px; border-radius: 0 10px 10px 0; font-size: 13px; color: #7a6a30; font-weight: 500; }
+/* FILTER BAR */
+.filter-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; background: white; padding: 10px 14px; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); margin-bottom: 10px; }
+.filter-bar label { font-size: 11px; color: #6b7280; font-weight: 600; }
+.filter-bar select { padding: 5px 8px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 12px; color: #374151; background: #f9fafb; cursor: pointer; outline: none; }
+.filter-count { margin-left: auto; font-size: 12px; color: #6b7280; font-weight: 600; }
 
-/* ===== STEP TIMELINE ===== */
-.timeline { display: flex; align-items: flex-start; overflow-x: auto; padding: 8px 0 12px; gap: 0; }
-.step-box { text-align: center; width: 110px; flex-shrink: 0; }
-.step-circle {
-  width: 54px; height: 54px; border-radius: 50%; margin: 0 auto 8px;
-  display: flex; align-items: center; justify-content: center; font-size: 22px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-.sc-done { background: linear-gradient(135deg, #c8f0c8, #a8e0a8); }
-.sc-active { background: linear-gradient(135deg, #fff9c4, #ffecb3); border: 3px dashed #f5b800; animation: blink 1.4s ease-in-out infinite; }
-.sc-pending { background: #f0f2f8; box-shadow: none; }
-@keyframes blink { 0%,100%{opacity:1}50%{opacity:0.55} }
-.step-lbl { font-size: 11px; color: #666; line-height: 1.5; white-space: pre-line; font-weight: 600; }
-.step-date { font-size: 11px; color: #6b9de8; font-weight: 700; margin-top: 4px; }
-.step-days-spent { font-size: 13px; font-weight: 900; color: #e07000; margin-top: 3px; background: #fff3e0; display: inline-block; padding: 1px 8px; border-radius: 8px; }
-.connector { height: 3px; width: 36px; flex-shrink: 0; background: #e0e4f0; margin-bottom: 30px; border-radius: 2px; }
-.connector.done { background: linear-gradient(90deg, #a8d8a8, #80c880); }
+/* TABLE */
+.tbl-wrap { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 6px rgba(0,0,0,0.07); overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 680px; }
+thead th { background: #EEF2FF; color: #4b5563; font-weight: 700; padding: 9px 10px; text-align: left; white-space: nowrap; font-size: 11px; border-bottom: 2px solid #e5e7eb; }
+thead th:last-child, thead th:nth-child(8) { text-align: center; }
+tbody tr.data-row { cursor: pointer; transition: background 0.15s; }
+tbody tr.data-row:hover { background: #f8faff; }
+tbody td { padding: 8px 10px; border-top: 1px solid #f3f4f6; color: #374151; vertical-align: middle; }
 
-/* ===== MONTHLY SUMMARY TABLE ===== */
-.month-summary { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 16px; overflow-x: auto; }
-.month-summary table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 480px; }
-.month-summary thead th { background: #eef2fb; color: #5b7ab8; font-weight: 700; padding: 8px 12px; text-align: center; font-size: 11px; white-space: nowrap; }
-.month-summary thead th:first-child { text-align: left; }
-.month-summary tbody td { padding: 7px 12px; border-top: 1px solid #f0f3fa; text-align: center; }
-.month-summary tbody td:first-child { text-align: left; font-weight: 600; color: #444; }
-.month-summary tbody tr:hover { background: #f8faff; }
-.month-summary .tot { font-weight: 800; color: #6b9de8; font-size: 14px; }
-.month-summary .d { color: #5bb85d; font-weight: 700; }
-.month-summary .i { color: #f5a623; font-weight: 700; }
-.month-summary .e { color: #e05c5c; font-weight: 700; }
-.month-summary .p { font-size: 11px; color: #888; }
-.month-summary tfoot td { background: #f4f6fb; font-weight: 800; padding: 8px 12px; border-top: 2px solid #dde3f0; text-align: center; font-size: 12px; }
-.month-summary tfoot td:first-child { text-align: left; color: #5b7ab8; }
+/* STATUS BADGES */
+.b-done    { display:inline-block; padding:2px 8px; border-radius:12px; font-size:10px; font-weight:700; background:#d1fae5; color:#065f46; white-space:nowrap; }
+.b-prog    { display:inline-block; padding:2px 8px; border-radius:12px; font-size:10px; font-weight:700; background:#fef3c7; color:#92400e; white-space:nowrap; }
+.b-esc     { display:inline-block; padding:2px 8px; border-radius:12px; font-size:10px; font-weight:700; background:#fee2e2; color:#991b1b; white-space:nowrap; }
 
-/* ===== CHARTS ===== */
-.chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
-.chart-card { background: #fff; border-radius: 12px; padding: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-.chart-card h3 { font-size: 12px; color: #7a8aaa; font-weight: 700; margin-bottom: 10px; }
-.chart-card canvas { max-height: 180px; }
-.chart-full { background: #fff; border-radius: 12px; padding: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 14px; }
-.chart-full h3 { font-size: 12px; color: #7a8aaa; font-weight: 700; margin-bottom: 10px; }
-.chart-full canvas { max-height: 200px; }
+/* DEPT CHIPS — rotating colors */
+.dept-chip { display:inline-block; padding:2px 7px; border-radius:8px; font-size:10px; font-weight:600; white-space:nowrap; }
+.dc-0 { background:#dbeafe; color:#1e40af; }
+.dc-1 { background:#d1fae5; color:#065f46; }
+.dc-2 { background:#fce7f3; color:#9d174d; }
+.dc-3 { background:#ede9fe; color:#5b21b6; }
+.dc-4 { background:#ffedd5; color:#9a3412; }
+.dc-5 { background:#fef9c3; color:#713f12; }
+.dc-6 { background:#e0f2fe; color:#075985; }
+.dc-7 { background:#f0fdf4; color:#14532d; }
+.dc-8 { background:#fdf4ff; color:#701a75; }
+.dc-9 { background:#fff7ed; color:#7c2d12; }
 
-.loading-msg { text-align: center; padding: 40px; color: #bbb; font-size: 13px; }
-.empty-msg { text-align: center; padding: 30px; color: #ccc; font-size: 12px; }
-.no-data-row td { text-align: center; padding: 20px; color: #bbb; }
+.type-chip { font-size:10px; color:#9ca3af; }
+.days-val { font-weight:700; }
+.days-red    { color:#dc2626; }
+.days-orange { color:#ea580c; }
+.days-green  { color:#16a34a; }
+.days-gray   { color:#9ca3af; }
 
-@media (max-width: 580px) {
-  .chart-grid { grid-template-columns: 1fr; }
-  .kpi-row { grid-template-columns: repeat(2, 1fr); }
-  .days-row { grid-template-columns: repeat(2, 1fr); }
-}
+/* DETAIL ROW */
+tr.detail-row { display:none; }
+tr.detail-row.open { display:table-row; }
+tr.detail-row td { background:#f9fafb; padding:14px 16px; border-top:none; }
+
+/* TIMELINE */
+.tl-wrap { display:flex; align-items:flex-start; gap:0; overflow-x:auto; padding:6px 0 10px; }
+.tl-step { text-align:center; width:120px; flex-shrink:0; }
+.tl-circle { width:62px; height:62px; border-radius:50%; margin:0 auto 8px; display:flex; align-items:center; justify-content:center; font-size:28px; box-shadow:0 2px 8px rgba(0,0,0,0.10); }
+.tl-done    { background:linear-gradient(135deg,#bbf7d0,#86efac); }
+.tl-active  { background:linear-gradient(135deg,#fef9c3,#fde68a); border:2px dashed #f59e0b; animation:blink 1.4s infinite; }
+.tl-pending { background:#f3f4f6; box-shadow:none; }
+@keyframes blink { 0%,100%{opacity:1}50%{opacity:0.5} }
+.tl-lbl  { font-size:12px; color:#6b7280; line-height:1.4; font-weight:600; }
+.tl-date { font-size:11px; color:#3b82f6; font-weight:700; margin-top:4px; }
+/* connector wrapper — days label on top of line */
+.tl-conn-wrap { display:flex; flex-direction:column; align-items:center; flex-shrink:0; padding-top:8px; }
+.tl-conn-days { font-size:11px; font-weight:800; color:#ea580c; background:#fff7ed; padding:2px 8px; border-radius:6px; margin-bottom:4px; white-space:nowrap; }
+.tl-conn { height:3px; width:40px; border-radius:2px; }
+.tl-conn-done    { background:linear-gradient(90deg,#86efac,#4ade80); }
+.tl-conn-pending { background:#e5e7eb; }
+
+.tl-meta { font-size:11px; color:#9ca3af; margin-bottom:10px; }
+.note-bar { margin-top:10px; background:#fffbeb; border-left:3px solid #fbbf24; padding:8px 12px; border-radius:0 8px 8px 0; font-size:12px; color:#78350f; }
+
+/* PAGE 2 — TRACK CARDS */
+.p2-header { background:linear-gradient(120deg,#ffd5d5 0%,#fde8d8 100%); border-radius:14px; padding:14px 20px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; }
+.p2-header-stat { background:rgba(255,255,255,0.75); padding:10px 18px; border-radius:12px; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,0.06); }
+.track-card { background:#fff; border-radius:14px; box-shadow:0 3px 12px rgba(0,0,0,0.08); margin-bottom:10px; border-left:5px solid #f4a0a0; overflow:hidden; transition:box-shadow 0.2s; }
+.track-card:hover { box-shadow:0 5px 18px rgba(0,0,0,0.13); }
+.track-card.prog { border-left-color:#fbbf24; }
+.track-summary { display:flex; justify-content:space-between; align-items:center; padding:16px 20px; cursor:pointer; gap:14px; user-select:none; }
+.track-summary:hover { background:#fdf8f8; }
+.track-title { font-size:16px; font-weight:800; color:#1e2d50; line-height:1.4; flex:1; }
+.track-summary-right { display:flex; align-items:center; gap:12px; flex-shrink:0; }
+.track-elapsed { font-size:22px; font-weight:900; color:#fff; background:linear-gradient(135deg,#e05c5c,#f59b84); padding:8px 14px; border-radius:12px; white-space:nowrap; box-shadow:0 3px 10px rgba(224,92,92,0.3); text-align:center; line-height:1.2; }
+.track-elapsed.prog-el { background:linear-gradient(135deg,#f59e0b,#fbbf24); box-shadow:0 3px 10px rgba(245,158,11,0.3); }
+.elapsed-unit { font-size:10px; font-weight:600; opacity:0.85; display:block; }
+.track-chevron { font-size:16px; color:#c0c8d8; transition:transform 0.25s; flex-shrink:0; }
+.track-card.open .track-chevron { transform:rotate(180deg); }
+.track-detail { display:none; padding:0 20px 16px; border-top:1px solid #fce8e8; }
+.track-card.open .track-detail { display:block; }
+.track-meta { font-size:12px; color:#8898b8; margin-bottom:12px; padding-top:12px; line-height:1.7; }
+.note-bar { margin-top:10px; background:#fffbeb; border-left:3px solid #fbbf24; padding:8px 12px; border-radius:0 8px 8px 0; font-size:12px; color:#78350f; }
+/* timeline in detail */
+.tl2-wrap { display:flex; align-items:flex-start; overflow-x:auto; padding:6px 0 12px; gap:0; }
+/* regular step: padding-top:6px so circle center = 6+25 = 31px from flex top */
+.tl2-step { display:flex; flex-direction:column; align-items:center; width:100px; flex-shrink:0; padding-top:6px; text-align:center; }
+/* active step: no padding, larger circle → center = 31px from flex top too */
+.tl2-step.active-step  { padding-top:0; width:115px; }
+.tl2-step.pending-step .tl2-lbl  { color:#d1d5db; }
+.tl2-step.pending-step .tl2-date { color:#d1d5db; }
+
+.tl2-circle { width:50px; height:50px; border-radius:50%; margin:0 auto 7px; display:flex; align-items:center; justify-content:center; font-size:22px; box-shadow:0 2px 6px rgba(0,0,0,0.08); }
+.tl2-step.active-step .tl2-circle  { width:62px; height:62px; font-size:30px; box-shadow:0 0 0 5px #fef9c3, 0 4px 14px rgba(245,158,11,0.25); }
+.tl2-done    { background:linear-gradient(135deg,#bbf7d0,#86efac); }
+.tl2-active  { background:linear-gradient(135deg,#fef9c3,#fde68a); border:2px dashed #f59e0b; animation:blink 1.4s infinite; }
+.tl2-pending { background:#f0f0f0; box-shadow:none; }
+
+.tl2-lbl  { font-size:11px; color:#6b7280; line-height:1.5; font-weight:600; }
+.tl2-step.active-step .tl2-lbl  { font-size:13px; font-weight:800; color:#1f2937; }
+.tl2-date { font-size:11px; color:#3b82f6; font-weight:700; margin-top:3px; }
+.tl2-step.active-step .tl2-date { font-size:12px; font-weight:800; color:#d97706; }
+.tl2-days { display:inline-block; font-size:11px; font-weight:800; color:#ea580c; background:#fff7ed; padding:1px 7px; border-radius:6px; margin-top:3px; }
+.tl2-step.active-step .tl2-days { font-size:13px; }
+/* connector wrapper — days label on top of line, padding-top aligns line center to circle center (31px) */
+.tl2-conn-wrap { display:flex; flex-direction:column; align-items:center; flex-shrink:0; padding-top:8px; }
+.tl2-conn-days { font-size:11px; font-weight:800; color:#ea580c; background:#fff7ed; padding:2px 8px; border-radius:6px; margin-bottom:4px; white-space:nowrap; }
+.tl2-conn { height:3px; width:28px; border-radius:2px; }
+.tl2-conn-done    { background:linear-gradient(90deg,#86efac,#4ade80); }
+.tl2-conn-pending { background:#e5e7eb; }
+/* shared */
+.dl { display:grid; grid-template-columns:155px 1fr; gap:5px 10px; }
+.dt { color:#6b7280; } .dd { color:#1f2937; font-weight:500; }
+.badge-g { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:600; background:#d1fae5; color:#065f46; }
+.badge-o { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:600; background:#ffedd5; color:#9a3412; }
+.badge-b { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:600; background:#dbeafe; color:#1e40af; }
+.dept-chip2 { display:inline-block; padding:2px 8px; border-radius:8px; font-size:11px; font-weight:600; background:#e0e7ff; color:#3730a3; }
+.empty-msg { text-align:center; padding:20px; color:#9ca3af; font-size:13px; }
+
+/* PAGE 3 */
+.p3-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
+.mini-kpi-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px; }
+.mini-kpi { background:#f9fafb; border-radius:8px; padding:10px; text-align:center; border-top:3px solid; }
+.mini-n { font-size:28px; font-weight:800; line-height:1.1; }
+.mini-l { font-size:10px; color:#6b7280; margin-top:3px; }
+.stage-item { margin-bottom:12px; }
+.stage-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; }
+.stage-lbl { font-size:12px; color:#374151; font-weight:500; }
+.stage-val { font-size:13px; font-weight:700; }
+.stage-n { font-size:10px; color:#9ca3af; font-weight:400; margin-left:4px; }
+.stage-track { height:10px; background:#f3f4f6; border-radius:5px; overflow:hidden; }
+.stage-fill { height:100%; border-radius:5px; }
+
+/* P2 GROUP TABS */
+.p2-group-tabs { display:flex; gap:10px; margin-bottom:12px; }
+.p2-group-btn { flex:1; padding:12px 16px; border:2px solid #e5e7eb; border-radius:14px; background:white; cursor:pointer; font-size:13px; font-weight:600; color:#6b7280; text-align:center; transition:all 0.2s; box-shadow:0 1px 4px rgba(0,0,0,0.05); }
+.p2-group-btn:hover { border-color:#d1d5db; background:#f9fafb; }
+.p2-group-btn.active-prog { border-color:#f59e0b; background:linear-gradient(135deg,#fffbeb,#fef3c7); color:#92400e; box-shadow:0 3px 12px rgba(245,158,11,0.2); }
+.p2-group-btn.active-esc  { border-color:#ef4444; background:linear-gradient(135deg,#fff5f5,#fee2e2); color:#991b1b; box-shadow:0 3px 12px rgba(239,68,68,0.2); }
+.p2-group-cnt { font-size:38px; font-weight:900; display:block; line-height:1.1; }
+.p2-group-lbl { font-size:12px; font-weight:600; display:block; margin-top:4px; opacity:0.85; }
+
+/* P3 ACCORDION SECTIONS */
+.p3-section { margin-bottom: 10px; }
+.p3-section-hdr { border-radius:13px; padding:14px 20px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; font-size:15px; font-weight:700; margin-bottom:10px; user-select:none; box-shadow:0 3px 10px rgba(0,0,0,0.08); transition:filter 0.15s; }
+.p3-section-hdr:hover { filter:brightness(0.96); }
+.p3-section-hdr.int-hdr { background:linear-gradient(120deg,#A8D8EA 0%,#C7CEEA 100%); color:#1e3a5f; }
+.p3-section-hdr.ext-hdr { background:linear-gradient(120deg,#FFB7B2 0%,#FFDAC1 100%); color:#7c2d12; }
+.p3-section-chev { font-size:14px; transition:transform 0.25s; }
+.p3-section-body { display:none; }
+.p3-section-body.open { display:block; }
+
+/* LOADING */
+.loading-msg { text-align:center; padding:40px 20px; color:#9ca3af; }
+.spinner { width:32px; height:32px; border:4px solid #e5e7eb; border-top-color:#A8D8EA; border-radius:50%; animation:spin 0.8s linear infinite; margin:0 auto 12px; }
+@keyframes spin { to { transform:rotate(360deg); } }
 </style>
 </head>
 <body>
 
-<div class="tab-bar">
-  <button class="tab-btn active" onclick="showTab(0)">📋 ภาพรวม</button>
-  <button class="tab-btn" onclick="showTab(1)">🔴 ส่งเรื่องต่อ</button>
-  <button class="tab-btn" onclick="showTab(2)">📊 ประสิทธิภาพ</button>
-</div>
-
-<!-- ========== TAB 0: OVERVIEW ========== -->
-<div id="pane0" class="tab-pane active">
-  <div class="dash-header header-blue">
-    <div>
-      <h1>🏥 Dashboard แจ้งซ่อม รพ.ท่ากระดาน</h1>
-      <div class="sub" id="lastUpdate">กำลังโหลดข้อมูลจาก Google Drive...</div>
-    </div>
-  </div>
-
-  <div id="kpiArea" class="kpi-row">
-    <div class="kpi"><div class="num c-blue">—</div><div class="lbl">ทั้งหมด</div></div>
-  </div>
-
-  <div class="section-title">⏱ เวลาเฉลี่ยแต่ละขั้นตอน</div>
-  <div id="daysArea" class="days-row"></div>
-
-  <div class="section-title">📅 สรุปรายเดือน</div>
-  <div class="month-summary" id="monthSummaryWrap">
-    <table>
-      <thead>
-        <tr>
-          <th>เดือน</th>
-          <th>ทั้งหมด</th>
-          <th>✓ แก้ไขแล้ว</th>
-          <th>⏳ กำลังดำเนินการ</th>
-          <th>🔴 ส่งเรื่องต่อ</th>
-          <th>อัตราสำเร็จ</th>
-          <th>เวลาเฉลี่ย (วัน)</th>
-        </tr>
-      </thead>
-      <tbody id="monthSummaryBody">
-        <tr><td colspan="7" style="text-align:center;padding:16px;color:#bbb">กำลังโหลด...</td></tr>
-      </tbody>
-      <tfoot id="monthSummaryFoot"></tfoot>
-    </table>
-  </div>
-
-  <div class="filter-bar">
-    <label>เดือน:</label>
-    <select id="fMonth" onchange="renderPane0()"><option value="">ทั้งหมด</option></select>
-    <label>สถานะ:</label>
-    <select id="fStatus" onchange="renderPane0()">
-      <option value="">ทั้งหมด</option>
-      <option value="ดำเนินการแก้ไขแล้ว">ดำเนินการแก้ไขแล้ว</option>
-      <option value="กำลังดำเนินการ">กำลังดำเนินการ</option>
-      <option value="แก้ไขไม่ได้ ส่งเรื่องต่อ">แก้ไขไม่ได้ ส่งเรื่องต่อ</option>
-    </select>
-    <label>ประเภท:</label>
-    <select id="fType" onchange="renderPane0()"><option value="">ทั้งหมด</option></select>
-    <label>แผนก:</label>
-    <select id="fDept" onchange="renderPane0()"><option value="">ทั้งหมด</option></select>
-  </div>
-
-  <div class="tbl-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>วันที่แจ้ง</th>
-          <th>แผนก</th>
-          <th>รายละเอียด</th>
-          <th>ประเภท</th>
-          <th>ผู้แจ้ง</th>
-          <th>สถานะ</th>
-          <th>ช่างนอก</th>
-          <th>รวม (วัน)</th>
-        </tr>
-      </thead>
-      <tbody id="mainTbody">
-        <tr><td colspan="9" class="loading-msg">กำลังโหลด...</td></tr>
-      </tbody>
-    </table>
+<div class="app-header">
+  <div>
+    <h1>🔧 ระบบติดตามการแจ้งซ่อม รพ.ท่ากระดาน</h1>
+    <div class="subtitle" id="last-update">กำลังโหลดข้อมูล...</div>
   </div>
 </div>
 
-<!-- ========== TAB 1: ESCALATED ========== -->
-<div id="pane1" class="tab-pane">
-  <div class="dash-header header-red">
-    <div>
-      <h1>🔴 ติดตาม "แก้ไขไม่ได้ ส่งเรื่องต่อ"</h1>
-      <div class="sub">ติดตามสถานะรายวันของแต่ละขั้นตอน</div>
-    </div>
-    <div id="escalateStat"></div>
-  </div>
-  <div id="escalateArea"><div class="loading-msg">กำลังโหลด...</div></div>
+<div class="tabs-bar">
+  <button class="tab-btn active" onclick="switchTab(1,this)">📊 ภาพรวม</button>
+  <button class="tab-btn" onclick="switchTab(2,this)">📋 เรื่องที่กำลังดำเนินการ</button>
+  <button class="tab-btn" onclick="switchTab(3,this)">⚡ ประสิทธิภาพช่าง</button>
 </div>
 
-<!-- ========== TAB 2: PERFORMANCE ========== -->
-<div id="pane2" class="tab-pane">
-  <div class="dash-header header-purple">
-    <div>
-      <h1>📊 ประสิทธิภาพการแจ้งซ่อม</h1>
-      <div class="sub">เปรียบเทียบรายเดือน • ปีต่อปี</div>
+<!-- ═══ PAGE 1: OVERVIEW ═══ -->
+<div id="p1" class="page active">
+  <div id="p1-loading" class="loading-msg"><div class="spinner"></div>กำลังโหลดจาก Google Drive...</div>
+  <div id="p1-content" style="display:none">
+    <!-- KPI -->
+    <div class="kpi-row">
+      <div class="kpi-box" style="border-top-color:#A8D8EA">
+        <div class="kpi-n" id="k-total" style="color:#3b82f6">-</div>
+        <div class="kpi-lbl">📋 รายการทั้งหมด<br>(มีสถานะ)</div>
+      </div>
+      <div class="kpi-box" style="border-top-color:#B5EAD7">
+        <div class="kpi-n" id="k-done" style="color:#10b981">-</div>
+        <div class="kpi-lbl">✅ ดำเนินการ<br>แก้ไขแล้ว</div>
+      </div>
+      <div class="kpi-box" style="border-top-color:#FFDAC1">
+        <div class="kpi-n" id="k-prog" style="color:#f59e0b">-</div>
+        <div class="kpi-lbl">⚙️ กำลัง<br>ดำเนินการ</div>
+      </div>
+      <div class="kpi-box" style="border-top-color:#FFB7B2">
+        <div class="kpi-n" id="k-esc" style="color:#ef4444">-</div>
+        <div class="kpi-lbl">📤 แก้ไขไม่ได้<br>ส่งเรื่องต่อ</div>
+      </div>
     </div>
-  </div>
 
-  <div class="chart-grid">
-    <div class="chart-card">
-      <h3>📅 จำนวนแจ้งซ่อมรายเดือน (แยกสถานะ)</h3>
-      <canvas id="cCount"></canvas>
+    <!-- CHART -->
+    <div class="card">
+      <div class="flex-row">
+        <div class="card-title" style="margin:0">สรุปการแจ้งซ่อม</div>
+        <select class="view-select" id="viewSel" onchange="renderP1Chart()">
+          <option value="month">📅 รายเดือน</option>
+          <option value="dept">🏥 แยกแผนก</option>
+          <option value="status">📌 สถานะ</option>
+        </select>
+      </div>
+      <div class="chart-wrap"><canvas id="mainChart"></canvas></div>
     </div>
-    <div class="chart-card">
-      <h3>🥧 สัดส่วนสถานะทั้งหมด</h3>
-      <canvas id="cPie"></canvas>
-    </div>
-  </div>
 
-  <div class="chart-full">
-    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
-      <h3 style="margin:0">⏱ เวลาเฉลี่ยในการแก้ไข (วัน) รายเดือน</h3>
-      <select id="avgStageSelect" onchange="renderAvgDaysChart()" style="padding:6px 12px;border-radius:8px;border:1.5px solid #d0daf0;font-size:13px;color:#444;background:#f8faff;cursor:pointer">
-        <option value="s1">ช่างภายในประเมิน — วันแจ้งซ่อม → วันที่ช่างประเมิน</option>
-        <option value="s2">ติดต่อช่างนอก — วันประเมิน → วันที่ติดต่อช่างนอก</option>
-        <option value="s3">ช่างนอกดำเนินการ — วันติดต่อ → วันที่ช่างนอกดำเนินการ</option>
-        <option value="s4">ช่างนอกดำเนินการเสร็จ — วันดำเนินการ → วันที่เสร็จ</option>
-        <option value="total">รวมทั้งหมด — วันแจ้งซ่อม → วันที่เสร็จ</option>
+    <!-- FILTER BAR -->
+    <div class="filter-bar">
+      <label>เดือน:</label>
+      <select id="fMonth" onchange="renderTable()"><option value="">ทั้งหมด</option></select>
+      <label>สถานะ:</label>
+      <select id="fStatus" onchange="renderTable()">
+        <option value="">ทั้งหมด</option>
+        <option value="done">✅ ดำเนินการแก้ไขแล้ว</option>
+        <option value="progress">⚙️ กำลังดำเนินการ</option>
+        <option value="escalated">📤 แก้ไขไม่ได้ ส่งเรื่องต่อ</option>
       </select>
+      <label>ประเภท:</label>
+      <select id="fType" onchange="renderTable()"><option value="">ทั้งหมด</option></select>
+      <label>แผนก:</label>
+      <select id="fDept" onchange="renderTable()"><option value="">ทั้งหมด</option></select>
+      <div class="filter-count" id="filterCount"></div>
     </div>
-    <canvas id="cAvgDays"></canvas>
+
+    <!-- TABLE -->
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>วันที่แจ้ง</th>
+            <th>แผนก</th>
+            <th>รายละเอียด</th>
+            <th>ประเภท</th>
+            <th>ผู้แจ้ง</th>
+            <th>สถานะ</th>
+            <th>หมายเหตุ</th>
+            <th style="text-align:center">รวม (วัน)</th>
+          </tr>
+        </thead>
+        <tbody id="mainTbody">
+          <tr><td colspan="9" style="text-align:center;padding:20px;color:#9ca3af">กำลังโหลด...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PAGE 2: ACTIVE ITEMS ═══ -->
+<div id="p2" class="page">
+  <div class="p2-header">
+    <div>
+      <div style="font-size:15px;font-weight:700;color:#9c2a2a">📋 ติดตาม "เรื่องที่กำลังดำเนินการ"</div>
+      <div style="font-size:11px;color:#9c2a2a;opacity:0.8;margin-top:3px">ติดตามสถานะรายวันของแต่ละขั้นตอน</div>
+    </div>
+    <div class="p2-header-stat">
+      <div id="p2-count" style="font-size:36px;font-weight:900;color:#c0392b;line-height:1">-</div>
+      <div style="font-size:10px;font-weight:700;color:#9c2a2a;margin-top:2px">รายการคงค้างทั้งหมด</div>
+    </div>
   </div>
 
-  <div class="chart-grid">
-    <div class="chart-card">
-      <h3>🔧 ประเภทงานแจ้งซ่อม</h3>
-      <canvas id="cType"></canvas>
+  <!-- GROUP TABS -->
+  <div class="p2-group-tabs">
+    <button class="p2-group-btn active-prog" id="gbtn-prog" onclick="showP2Group('progress')">
+      <span class="p2-group-cnt" id="p2-prog-cnt" style="color:#f59e0b">-</span>
+      <span class="p2-group-lbl">⚙️ กำลังดำเนินการ</span>
+    </button>
+    <button class="p2-group-btn" id="gbtn-esc" onclick="showP2Group('escalated')">
+      <span class="p2-group-cnt" id="p2-esc-cnt" style="color:#ef4444">-</span>
+      <span class="p2-group-lbl">📤 แก้ไขไม่ได้ ส่งเรื่องต่อ</span>
+    </button>
+  </div>
+
+  <div id="active-list"><div class="empty-msg">กำลังโหลด...</div></div>
+</div>
+
+<!-- ═══ PAGE 3: PERFORMANCE ═══ -->
+<div id="p3" class="page">
+
+  <!-- ══ SECTION 1: ช่างภายในรพ. ══ -->
+  <div class="p3-section">
+    <div class="p3-section-hdr int-hdr" onclick="toggleP3Section('int')">
+      <span>🔨 ช่างภายในรพ.</span>
+      <span class="p3-section-chev" id="p3-chev-int">▲</span>
     </div>
-    <div class="chart-card">
-      <h3>🏢 แผนกที่แจ้งซ่อมมากที่สุด</h3>
-      <canvas id="cDept"></canvas>
+    <div class="p3-section-body open" id="p3-sec-int">
+
+      <div class="card">
+        <div class="card-title">🔨 ช่างภายใน รพ.</div>
+        <div class="mini-kpi-row">
+          <div class="mini-kpi" style="border-top-color:#B5EAD7">
+            <div class="mini-n" id="p3-int-done" style="color:#10b981">-</div>
+            <div class="mini-l">อัตราแก้ไขสำเร็จ<br><span style="font-size:9px;color:#9ca3af">(สำเร็จ / สำเร็จ+ส่งต่อ)</span></div>
+          </div>
+          <div class="mini-kpi" style="border-top-color:#A8D8EA">
+            <div class="mini-n" id="p3-int-avg" style="color:#3b82f6">-</div>
+            <div class="mini-l">วันเฉลี่ยประเมิน<br><span style="font-size:9px;color:#9ca3af">(แจ้ง→ประเมิน)</span></div>
+          </div>
+        </div>
+        <div class="chart-wrap-sm"><canvas id="intChart"></canvas></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📊 ช่างในดำเนินการแก้ไขสำเร็จ (รายเดือน)</div>
+        <div class="chart-wrap-lg"><canvas id="cmpChart"></canvas></div>
+      </div>
+
+      <div class="p3-grid">
+        <div class="card">
+          <div class="card-title">📊 รายการครุภัณฑ์การแพทย์</div>
+          <div class="chart-wrap-lg"><canvas id="bar1Chart"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">📊 รายการที่ไม่ใช่ครุภัณฑ์การแพทย์</div>
+          <div class="chart-wrap-lg"><canvas id="bar2Chart"></canvas></div>
+        </div>
+      </div>
+
+      <div class="p3-grid">
+        <div class="card">
+          <div class="card-title">📈 % สำเร็จ — ครุภัณฑ์การแพทย์ (รายเดือน)</div>
+          <div class="chart-wrap-lg"><canvas id="line1Chart"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">📈 % สำเร็จ — ไม่ใช่ครุภัณฑ์การแพทย์ (รายเดือน)</div>
+          <div class="chart-wrap-lg"><canvas id="line2Chart"></canvas></div>
+        </div>
+      </div>
+
     </div>
   </div>
 
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:4px">
-    <div class="chart-box" style="padding:18px 20px">
-      <h3 style="margin:0 0 12px;font-size:14px;color:#5b8dee">🔧 ไม่ใช่ครุภัณฑ์ทางการแพทย์</h3>
-      <canvas id="cTypeSuccess1"></canvas>
+  <!-- ══ SECTION 2: ช่างภายนอกรพ. ══ -->
+  <div class="p3-section">
+    <div class="p3-section-hdr ext-hdr" onclick="toggleP3Section('ext')">
+      <span>🏗️ ช่างภายนอกรพ.</span>
+      <span class="p3-section-chev" id="p3-chev-ext">▼</span>
     </div>
-    <div class="chart-box" style="padding:18px 20px">
-      <h3 style="margin:0 0 12px;font-size:14px;color:#e8a87c">🏥 ครุภัณฑ์ทางการแพทย์</h3>
-      <canvas id="cTypeSuccess2"></canvas>
+    <div class="p3-section-body" id="p3-sec-ext">
+      <div class="card">
+        <div class="card-title">🏗️ ช่างภายนอก รพ.</div>
+        <div class="mini-kpi-row">
+          <div class="mini-kpi" style="border-top-color:#FFB7B2">
+            <div class="mini-n" id="p3-ext-done" style="color:#ef4444">-</div>
+            <div class="mini-l">งานช่างนอกสำเร็จ<br><span style="font-size:9px;color:#9ca3af">(มีวันเสร็จสิ้น)</span></div>
+          </div>
+          <div class="mini-kpi" style="border-top-color:#FFDAC1">
+            <div class="mini-n" id="p3-ext-avg" style="color:#f59e0b">-</div>
+            <div class="mini-l">วันเฉลี่ยดำเนินการ<br><span style="font-size:9px;color:#9ca3af">(ติดต่อ→เสร็จ)</span></div>
+          </div>
+        </div>
+        <div id="p3-ext-stages"></div>
+      </div>
     </div>
   </div>
 
-  <div class="chart-full">
-    <h3>📈 อัตราความสำเร็จรายเดือน (%)</h3>
-    <canvas id="cSuccess"></canvas>
-  </div>
 </div>
 
 <script>
-/* =================== INLINE DATALABELS PLUGIN =================== */
-// Custom Chart.js plugin — draws value labels above bars / line points
-const topLabelPlugin = {
-  id: 'topLabel',
-  afterDatasetsDraw(chart) {
-    const opts = chart.config.options?.plugins?.topLabel;
-    if (!opts || !opts.display) return;
-    const { ctx } = chart;
-    const suffix  = opts.suffix  || '';
-    const color   = opts.color   || '#444';
-    const fsize   = opts.fontSize || 11;
-    const offset  = opts.offset  || 6;
-    const skipZero = opts.skipZero !== false; // default: skip 0
+const FILE_ID   = '1JrVY0MHVRq4eAyi-fjKQVRW7LCz8v2vJlQpwm41Iy6E';
+const TOOL_READ = 'mcp__2ab58198-5cf1-41c3-ad51-21c43099d588__read_file_content';
+const TOOL_DL   = 'mcp__2ab58198-5cf1-41c3-ad51-21c43099d588__download_file_content';
+const TM = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+const TODAY = (() => { const d=new Date(); d.setHours(0,0,0,0); return d; })();
+const PASTEL = ['#A8D8EA','#B5EAD7','#FFB7B2','#FFDAC1','#C7CEEA','#FFEAA7','#FF9AA2','#E2F0CB','#B5D8EB','#D4EDDA'];
+const DEPT_COLORS = {}; // dept → class index
+let deptColorIdx = 0;
 
-    chart.data.datasets.forEach((dataset, i) => {
-      const meta = chart.getDatasetMeta(i);
-      if (meta.hidden) return;
-      const dsColor = opts.useDatasetColor
-        ? (dataset.borderColor || dataset.backgroundColor || color)
-        : color;
+let data = [];
+let charts = {};
 
-      meta.data.forEach((element, j) => {
-        const raw = dataset.data[j];
-        if (raw === null || raw === undefined) return;
-        if (skipZero && raw === 0) return;
-        const label = (Number.isInteger(raw) ? raw : (+raw).toFixed(1)) + suffix;
-
-        ctx.save();
-        ctx.font = `bold ${fsize}px 'Segoe UI', sans-serif`;
-        ctx.fillStyle = dsColor;
-        ctx.textAlign  = 'center';
-        ctx.textBaseline = 'bottom';
-        // For horizontal bar (indexAxis:'y'), put label to the right
-        if (chart.config.options?.indexAxis === 'y') {
-          ctx.textBaseline = 'middle';
-          ctx.textAlign = 'left';
-          ctx.fillText(label, element.x + offset, element.y);
-        } else {
-          ctx.fillText(label, element.x, element.y - offset);
-        }
-        ctx.restore();
-      });
-    });
-  }
-};
-Chart.register(topLabelPlugin);
-
-/* =================== DATA & STATE =================== */
-let allData = [];
-let chartInstances = {};
-
-/* =================== TAB SWITCHING =================== */
-function showTab(idx) {
-  document.querySelectorAll('.tab-pane').forEach((el, i) => el.classList.toggle('active', i === idx));
-  document.querySelectorAll('.tab-btn').forEach((el, i) => el.classList.toggle('active', i === idx));
-  if (idx === 2 && allData.length > 0) setTimeout(renderPane2, 50);
-}
-
-/* =================== DATE UTILITIES =================== */
+// ── UTILS ─────────────────────────────────────
 function parseDate(s) {
-  if (!s || !s.trim()) return null;
-  const str = s.trim().split(' ')[0]; // strip time "5/13/2026 15:10:37" → "5/13/2026"
-  const p = str.split('/');
-  if (p.length === 3) {
-    let a = +p[0], b = +p[1], c = +p[2];
-    let month, day, year;
-    if (a > 100) {
-      // YYYY/M/D  (year first)
-      year = a; month = b; day = c;
-    } else if (c > 100) {
-      // M/D/YYYY or D/M/YYYY (year last — Apps Script default: M/D/YYYY)
-      year = c;
-      if (a > 12) { day = a; month = b; }  // D/M/YYYY (day > 12 → must be day)
-      else         { month = a; day = b; }  // M/D/YYYY
-    } else {
-      return null; // no recognizable year
-    }
-    if (year > 2500) year -= 543; // Buddhist Era → CE
-    if (year < 100)  year += 2000;
-    const d = new Date(year, month - 1, day);
-    return isNaN(d) ? null : d;
+  if (!s||!s.trim()) return null;
+  const p=s.trim().split('/'); if(p.length!==3) return null;
+  const d=new Date(+p[2],+p[0]-1,+p[1]); d.setHours(0,0,0,0);
+  return isNaN(d.getTime())?null:d;
+}
+function daysBetween(a,b){ if(!a||!b) return null; return Math.round((b-a)/86400000); }
+function fmtDate(d){ if(!d) return '—'; return `${d.getDate()} ${TM[d.getMonth()]} ${d.getFullYear()}`; }
+function fmtDateShort(d){ if(!d) return '—'; return `${d.getDate()}/${d.getMonth()+1}/${String(d.getFullYear()).slice(2)}`; }
+function getMonthKey(d){ if(!d) return null; return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; }
+function fmtMonthKey(k){ const [y,m]=k.split('-'); return `${TM[+m-1]} ${String(+y).slice(2)}`; }
+function calcAvg(arr){ const v=arr.filter(x=>x!=null&&!isNaN(x)); if(!v.length) return null; return Math.round(v.reduce((a,b)=>a+b,0)/v.length*10)/10; }
+function killChart(id){ if(charts[id]){charts[id].destroy();delete charts[id];} }
+function getDeptClass(dept){
+  if(!DEPT_COLORS[dept]){ DEPT_COLORS[dept]=deptColorIdx%10; deptColorIdx++; }
+  return 'dc-'+DEPT_COLORS[dept];
+}
+
+// ── RESPONSE EXTRACTOR (robust, from working dashboard) ────────
+function extractText(res) {
+  if (!res) return '';
+  function tryJson(s) {
+    if (typeof s !== 'string') return s;
+    try { const p=JSON.parse(s); if(p&&typeof p==='object'){const v=p.fileContent||p.content||p.text||p.data||''; if(v) return v;} } catch {}
+    return s;
   }
-  const d = new Date(str);
-  return isNaN(d) ? null : d;
-}
-function daysBetween(a, b) {
-  if (!a || !b) return null;
-  return Math.round((b - a) / 86400000);
-}
-function fmt(d) {
-  if (!d) return '—';
-  return `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
-}
-function avg(arr) {
-  const clean = arr.filter(x => x !== null && x >= 0);
-  if (!clean.length) return null;
-  return +(clean.reduce((a,b) => a+b, 0) / clean.length).toFixed(1);
+  if (Array.isArray(res)) {
+    const joined = res.map(b=>{ if(!b) return ''; if(b.type==='text') return b.text||''; if(typeof b==='string') return b; return b.content||b.text||b.fileContent||''; }).join('');
+    return tryJson(joined)||joined;
+  }
+  if (typeof res==='string') return tryJson(res);
+  if (Array.isArray(res.content)) return extractText(res.content);
+  const direct=res.fileContent||res.text||res.data||'';
+  if (direct) return tryJson(direct)||direct;
+  const best=Object.values(res).filter(v=>typeof v==='string'&&v.length>30).sort((a,b)=>b.length-a.length)[0]||'';
+  return tryJson(best)||best;
 }
 
-/* =================== MARKDOWN TABLE PARSER =================== */
-function parseMarkdown(text) {
-  const lines = text.split('\n').filter(l => {
-    const t = l.trim();
-    return t.startsWith('|') && !t.replace(/\|/g,'').replace(/[:\-\s]/g,'');
-    // keep all lines starting with |, but skip separator lines (only :,-,space chars)
-  });
-  // More robust approach:
-  const allLines = text.split('\n').filter(l => l.trim().startsWith('|'));
-  const dataLines = allLines.filter(l => !l.match(/^\|[\s|:\-]+\|$/));
-  if (dataLines.length < 2) return [];
-
-  const parseRow = line => line.split('|').filter((_, i, a) => i > 0 && i < a.length - 1).map(c => c.trim());
-  const headers = parseRow(dataLines[0]);
-  const rows = [];
-  for (let i = 1; i < dataLines.length; i++) {
-    const cells = parseRow(dataLines[i]);
-    if (!cells.length) continue;
-    const obj = {};
-    headers.forEach((h, j) => { obj[h] = cells[j] || ''; });
-    rows.push(obj);
+// ── PARSERS ───────────────────────────────────
+function parseMarkdown(md) {
+  const lines=(md||'').split('\n').filter(l=>l.includes('|'));
+  if(lines.length<2) return [];
+  const parseRow=l=>l.split('|').slice(1,-1).map(c=>c.trim());
+  const headers=parseRow(lines[0]); const rows=[];
+  for(let i=1;i<lines.length;i++){
+    if(/^\s*\|[\s:\-|]+\|\s*$/.test(lines[i])) continue;
+    const cells=parseRow(lines[i]); if(!cells.length) continue;
+    const r={}; headers.forEach((h,idx)=>{r[h]=cells[idx]!==undefined?cells[idx]:'';});
+    rows.push(r);
   }
   return rows;
 }
-
-/* =================== PROCESS DATA =================== */
-/* ---- fuzzy column finder ---- */
-function findCol(r, ...keywords) {
-  const keys = Object.keys(r);
-  for (const kw of keywords) {
-    // exact match first
-    if (r[kw] !== undefined) return r[kw] || '';
-    // partial match
-    const hit = keys.find(k => k.includes(kw));
-    if (hit) return r[hit] || '';
-  }
-  return '';
+function parseCSV(csv) {
+  const lines=csv.split('\n').filter(l=>l.trim()); if(lines.length<2) return [];
+  const split=l=>{ const c=[]; let cur='',inQ=false; for(const ch of l){if(ch==='"'){inQ=!inQ;}else if(ch===','&&!inQ){c.push(cur.trim());cur='';}else cur+=ch;} c.push(cur.trim()); return c; };
+  const h=split(lines[0]);
+  return lines.slice(1).map(l=>{ const c=split(l); const o={}; h.forEach((k,i)=>{o[k]=c[i]||'';}); return o; });
 }
 
-function processData(rows) {
-  return rows.map((r, idx) => {
-    // Try multiple column name variations for each date field
-    const reportDate  = parseDate(findCol(r, 'วันที่แจ้งซ่อม', 'Timestamp', 'วันที่แจ้ง', 'วันที่'));
-    // resolveDate = วันที่ช่างภายในตรวจสอบ/แก้ไข
-    const resolveDate = parseDate(
-      r['วันที่ได้รับการแก้ไข หรือแก้ไขไม่ได้ต้องส่งเรื่องต่อ'] ||
-      r['วันที่ช่างภายในตรวจสอบ/แก้ไข'] || r['วันที่ช่างภายในประเมิน'] ||
-      findCol(r, 'วันที่ได้รับการแก้ไข', 'ภายในตรวจสอบ', 'ประเมิน') || '');
-    // contactDate = วันที่ติดต่อช่างนอก
-    const contactDate = parseDate(
-      r['วันที่ติดต่อช่างนอก'] ||
-      findCol(r, 'ติดต่อช่างนอก') || '');
-    // workDate = วันที่ช่างนอกดำเนินการ
-    const workDate = parseDate(
-      r['วันที่ช่างดำเนินการ'] || r['วันที่ช่างนอกดำเนินการ'] ||
-      findCol(r, 'วันที่ช่างดำเนินการ', 'ช่างนอกดำเนินการ') || '');
-    // doneDate = วันที่ช่างนอกดำเนินการเสร็จ
-    const doneDate = parseDate(
-      r['วันที่ดำเนินการเสร็จ'] || r['วันที่ช่างนอกดำเนินการเสร็จ'] ||
-      findCol(r, 'ดำเนินการเสร็จ') || '');
-    const status      = (r['สถานะ'] || '').trim();
+// ── PROCESS ROW ───────────────────────────────
+function processRow(r) {
+  const status=(r['สถานะ']||'').trim();
+  if(!status) return null;
+  const reportDate=parseDate(r['วันที่แจ้งซ่อม']);
+  const assessDate=parseDate(r['วันที่ช่างภายในประเมิณ']);
+  const contactDate=parseDate(r['วันที่ติดต่อช่างนอก']);
+  const extStartDate=parseDate(r['วันที่ช่างนอกดำเนินการ']);
+  const extFinishDate=parseDate(r['วันที่ช่างนอกดำเนินการเสร็จ']);
+  const shortType=(r['เรื่องแจ้งซ่อม']||'').includes('ไม่ใช่')?'ไม่ใช่ครุภัณฑ์':'ครุภัณฑ์';
+  const row={
+    desc:r['รายละเอียดของการแจ้งซ่อม']||'(ไม่ระบุ)',
+    category:r['เรื่องแจ้งซ่อม']||'', shortType,
+    dept:r['แผนก / สถานที่ ที่เจอปัญหา']||'',
+    reporter:r['ชื่อผู้แจ้ง']||'',
+    note:r['หมายเหตุ']||'',
+    status,reportDate,assessDate,contactDate,extStartDate,extFinishDate,
+    reportMonth:getMonthKey(reportDate),
+    daysElapsed:reportDate?daysBetween(reportDate,TODAY):null,
+  };
+  if(status==='ดำเนินการแก้ไขแล้ว'){
+    row.type='done';
+    row.intDays=(reportDate&&assessDate)?daysBetween(reportDate,assessDate):null;
+    row.totalDays=row.intDays;
+  } else if(status==='แก้ไขไม่ได้ ส่งเรื่องต่อ'){
+    row.type='escalated';
+    row.intDays=(reportDate&&assessDate)?daysBetween(reportDate,assessDate):null;
+    row.extS1=(assessDate&&contactDate)?daysBetween(assessDate,contactDate):null;
+    row.extS2=(contactDate&&extStartDate)?daysBetween(contactDate,extStartDate):null;
+    row.extS3=(extStartDate&&extFinishDate)?daysBetween(extStartDate,extFinishDate):null;
+    row.extContactToDone=(contactDate&&extFinishDate)?daysBetween(contactDate,extFinishDate):null;
+    row.extDone=!!extFinishDate;
+    row.extTotalDays=(assessDate&&extFinishDate)?daysBetween(assessDate,extFinishDate):null;
+    row.totalDays=(reportDate&&extFinishDate)?daysBetween(reportDate,extFinishDate):null;
+    if(extFinishDate)     row.extStage='ช่างนอกเสร็จแล้ว';
+    else if(extStartDate) row.extStage='ช่างนอกกำลังดำเนินการ';
+    else if(contactDate)  row.extStage='รอช่างนอกเริ่มงาน';
+    else                  row.extStage='รอติดต่อช่างนอก';
+  } else if(status==='กำลังดำเนินการ'){
+    row.type='progress'; row.totalDays=null;
+  }
+  return row;
+}
 
-    let totalDays = null;
-    if (reportDate) {
-      if (doneDate) totalDays = daysBetween(reportDate, doneDate);
-      else if (resolveDate && status === 'ดำเนินการแก้ไขแล้ว') totalDays = daysBetween(reportDate, resolveDate);
+// ── PAGE 1 ────────────────────────────────────
+function renderP1() {
+  document.getElementById('k-total').textContent=data.length;
+  document.getElementById('k-done').textContent=data.filter(r=>r.type==='done').length;
+  document.getElementById('k-prog').textContent=data.filter(r=>r.type==='progress').length;
+  document.getElementById('k-esc').textContent=data.filter(r=>r.type==='escalated').length;
+  document.getElementById('p1-loading').style.display='none';
+  document.getElementById('p1-content').style.display='block';
+  renderP1Chart();
+  populateDropdowns();
+  renderTable();
+}
+
+function renderP1Chart() {
+  const view=document.getElementById('viewSel').value;
+  killChart('main');
+  const ctx=document.getElementById('mainChart').getContext('2d');
+  let labels,datasets,indexAxis='x';
+  if(view==='month'){
+    const months=[...new Set(data.map(r=>r.reportMonth).filter(Boolean))].sort();
+    labels=months.map(fmtMonthKey);
+    datasets=[
+      {label:'ดำเนินการแก้ไขแล้ว',data:months.map(m=>data.filter(r=>r.reportMonth===m&&r.type==='done').length),backgroundColor:'#B5EAD7',borderColor:'#6ee7b7',borderWidth:1},
+      {label:'กำลังดำเนินการ',data:months.map(m=>data.filter(r=>r.reportMonth===m&&r.type==='progress').length),backgroundColor:'#FFDAC1',borderColor:'#fb923c',borderWidth:1},
+      {label:'แก้ไขไม่ได้ ส่งเรื่องต่อ',data:months.map(m=>data.filter(r=>r.reportMonth===m&&r.type==='escalated').length),backgroundColor:'#FFB7B2',borderColor:'#f87171',borderWidth:1},
+    ];
+  } else if(view==='dept'){
+    const depts=[...new Set(data.map(r=>r.dept).filter(Boolean))];
+    labels=depts; indexAxis='y';
+    datasets=[{label:'จำนวนรายการ',data:depts.map(d=>data.filter(r=>r.dept===d).length),backgroundColor:PASTEL,borderColor:PASTEL,borderWidth:1}];
+  } else {
+    labels=['ดำเนินการแก้ไขแล้ว','กำลังดำเนินการ','แก้ไขไม่ได้ ส่งเรื่องต่อ'];
+    datasets=[{label:'จำนวนรายการ',data:[data.filter(r=>r.type==='done').length,data.filter(r=>r.type==='progress').length,data.filter(r=>r.type==='escalated').length],backgroundColor:['#B5EAD7','#FFDAC1','#FFB7B2'],borderColor:['#6ee7b7','#fb923c','#f87171'],borderWidth:1}];
+  }
+  charts['main']=new Chart(ctx,{type:'bar',data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,indexAxis,plugins:{legend:{position:'bottom',labels:{font:{size:11},padding:10}}},scales:{x:{stacked:view==='month',grid:{color:'#f3f4f6'},ticks:{font:{size:11}}},y:{stacked:view==='month',grid:{color:'#f3f4f6'},ticks:{font:{size:11},stepSize:1}}}}});
+}
+
+function populateDropdowns() {
+  const months=[...new Set(data.map(r=>r.reportMonth).filter(Boolean))].sort();
+  const mSel=document.getElementById('fMonth');
+  months.forEach(m=>{ mSel.innerHTML+=`<option value="${m}">${fmtMonthKey(m)}</option>`; });
+  const types=[...new Set(data.map(r=>r.shortType).filter(Boolean))];
+  const tSel=document.getElementById('fType');
+  types.forEach(t=>{ tSel.innerHTML+=`<option value="${t}">${t}</option>`; });
+  const depts=[...new Set(data.map(r=>r.dept).filter(Boolean))].sort();
+  const dSel=document.getElementById('fDept');
+  depts.forEach(d=>{ dSel.innerHTML+=`<option value="${d}">${d}</option>`; });
+}
+
+function getFiltered() {
+  const fM=document.getElementById('fMonth').value;
+  const fS=document.getElementById('fStatus').value;
+  const fT=document.getElementById('fType').value;
+  const fD=document.getElementById('fDept').value;
+  return data.filter(r=>{
+    if(fM&&r.reportMonth!==fM) return false;
+    if(fS&&r.type!==fS) return false;
+    if(fT&&r.shortType!==fT) return false;
+    if(fD&&r.dept!==fD) return false;
+    return true;
+  });
+}
+
+function renderTable() {
+  const rows=getFiltered().sort((a,b)=>(a.reportDate||0)-(b.reportDate||0));
+  document.getElementById('filterCount').textContent=`แสดง ${rows.length} / ${data.length} รายการ`;
+  const tbody=document.getElementById('mainTbody');
+
+  if(!rows.length){
+    tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:24px;color:#9ca3af">ไม่พบรายการที่ตรงเงื่อนไข</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML=rows.map((r,i)=>{
+    const badge=r.type==='done'?'b-done':r.type==='progress'?'b-prog':'b-esc';
+    const badgeTxt=r.type==='done'?'✅ แก้ไขแล้ว':r.type==='progress'?'⚙️ กำลังดำเนินการ':'🔴 ส่งเรื่องต่อ';
+    const noteText=r.note||'';
+    const daysVal=r.totalDays;
+    const daysCls=daysVal==null?'days-gray':daysVal>14?'days-red':daysVal>7?'days-orange':'days-green';
+    const deptCls=getDeptClass(r.dept);
+    const uid=`row-${i}`;
+
+    // Build timeline HTML for detail row
+    const tlHTML=buildTimeline(r);
+
+    return `
+<tr class="data-row" onclick="toggleRow('${uid}')">
+  <td style="color:#9ca3af;font-size:10px">${i+1}</td>
+  <td style="white-space:nowrap;font-size:11px">${fmtDateShort(r.reportDate)}</td>
+  <td><span class="dept-chip ${deptCls}">${r.dept||'—'}</span></td>
+  <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.desc}">${r.desc}</td>
+  <td><span class="type-chip">${r.shortType}</span></td>
+  <td style="font-size:11px">${r.reporter}</td>
+  <td><span class="${badge}">${badgeTxt}</span></td>
+  <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:#6b7280" title="${noteText}">${noteText}</td>
+  <td style="text-align:center"><span class="days-val ${daysCls}">${daysVal!=null?daysVal:'—'}</span></td>
+</tr>
+<tr class="detail-row" id="${uid}">
+  <td colspan="9">
+    <div class="tl-meta">🏥 <strong>${r.dept}</strong> &nbsp;•&nbsp; ${r.shortType} &nbsp;•&nbsp; ผู้แจ้ง: <strong>${r.reporter}</strong> &nbsp;•&nbsp; วันที่แจ้ง: ${fmtDate(r.reportDate)}</div>
+    <div class="tl-wrap">${tlHTML}</div>
+    ${r.note?`<div class="note-bar">📌 ${r.note}</div>`:''}
+  </td>
+</tr>`;
+  }).join('');
+}
+
+function buildTimeline(r) {
+  // Define steps based on type
+  const steps=[];
+  steps.push({icon:'📝',lbl:'แจ้งซ่อม',date:r.reportDate,nextDate:r.assessDate||null});
+
+  if(r.type==='done'){
+    steps.push({icon:'🔍',lbl:'ช่างในประเมิน\nและแก้ไข',date:r.assessDate,nextDate:null});
+  } else if(r.type==='escalated'){
+    steps.push({icon:'🔍',lbl:'ช่างในประเมิน',date:r.assessDate,nextDate:r.contactDate});
+    steps.push({icon:'📞',lbl:'ติดต่อช่างนอก',date:r.contactDate,nextDate:r.extStartDate});
+    steps.push({icon:'🔧',lbl:'ช่างนอก\nดำเนินการ',date:r.extStartDate,nextDate:r.extFinishDate});
+    steps.push({icon:'✅',lbl:'เสร็จสิ้น',date:r.extFinishDate,nextDate:null});
+  } else {
+    // in progress
+    steps.push({icon:'⚙️',lbl:'ช่างภายใน\nกำลังตรวจสอบ',date:r.assessDate,nextDate:null});
+  }
+
+  return steps.map((s,i)=>{
+    const isDone=!!s.date;
+    const isActive=!s.date&&(i===0||!!steps[i-1]?.date);
+    const cc=isDone?'tl-done':isActive?'tl-active':'tl-pending';
+    const connDone=(i>0&&!!steps[i-1]?.date)?'tl-conn-done':'tl-conn-pending';
+    // days on the connector = days from prev step to this step
+    let connDays=null;
+    if(i>0){
+      const prev=steps[i-1];
+      if(prev.date&&s.date) connDays=daysBetween(prev.date,s.date);
+      else if(prev.date&&!s.date&&isActive) connDays=daysBetween(prev.date,TODAY);
+    }
+    return `${i>0?`<div class="tl-conn-wrap">
+  ${connDays!=null?`<div class="tl-conn-days">${connDays} วัน</div>`:'<div class="tl-conn-days" style="visibility:hidden">—</div>'}
+  <div class="tl-conn ${connDone}"></div>
+</div>`:''}
+<div class="tl-step">
+  <div class="tl-circle ${cc}">${s.icon}</div>
+  <div class="tl-lbl">${s.lbl.replace('\n','<br>')}</div>
+  <div class="tl-date">${s.date?fmtDateShort(s.date):'—'}</div>
+</div>`;
+  }).join('');
+}
+
+function toggleRow(uid) {
+  const el=document.getElementById(uid);
+  if(el) el.classList.toggle('open');
+}
+
+// ── PAGE 2 ────────────────────────────────────
+let p2CurrentGroup = 'progress';
+let p2Groups = { progress: [], escalated: [] };
+
+function renderP2() {
+  // แบ่ง 2 กลุ่ม
+  p2Groups.progress = data.filter(r => r.type === 'progress')
+    .sort((a,b) => (b.daysElapsed||0) - (a.daysElapsed||0));
+
+  p2Groups.escalated = data.filter(r =>
+    r.type === 'escalated' && !(r.contactDate && r.extStartDate && r.extFinishDate)
+  ).sort((a,b) => (b.daysElapsed||0) - (a.daysElapsed||0));
+
+  const total = p2Groups.progress.length + p2Groups.escalated.length;
+  document.getElementById('p2-count').textContent = total;
+  document.getElementById('p2-prog-cnt').textContent = p2Groups.progress.length;
+  document.getElementById('p2-esc-cnt').textContent  = p2Groups.escalated.length;
+
+  showP2Group(p2CurrentGroup);
+}
+
+function showP2Group(group) {
+  p2CurrentGroup = group;
+  // อัปเดต active style บน tab buttons
+  document.getElementById('gbtn-prog').className = 'p2-group-btn' + (group === 'progress'  ? ' active-prog' : '');
+  document.getElementById('gbtn-esc').className  = 'p2-group-btn' + (group === 'escalated' ? ' active-esc'  : '');
+
+  const items = p2Groups[group] || [];
+  if (!items.length) {
+    document.getElementById('active-list').innerHTML = '<div class="empty-msg">✅ ไม่มีรายการในกลุ่มนี้</div>';
+    return;
+  }
+
+  document.getElementById('active-list').innerHTML = items.map((r,i) => {
+    const isProgress = r.type === 'progress';
+    const cardId = `tc2-${group}-${i}`;
+    const d = r.daysElapsed;
+    const elClass = isProgress ? 'prog-el' : '';
+    const cardClass = isProgress ? 'prog' : '';
+    const steps = buildSteps2(r);
+
+    return `
+<div class="track-card ${cardClass}" id="${cardId}">
+  <div class="track-summary" onclick="toggleCard2('${cardId}')">
+    <div class="track-title">${r.desc}</div>
+    <div class="track-summary-right">
+      <div class="track-elapsed ${elClass}">
+        ${d!=null?d:'—'}
+        <span class="elapsed-unit">วันที่ผ่านมา</span>
+      </div>
+      <div class="track-chevron">▾</div>
+    </div>
+  </div>
+  <div class="track-detail">
+    <div class="track-meta">
+      <span class="dept-chip2">${r.dept}</span>
+      &nbsp;•&nbsp; ${r.shortType}
+      &nbsp;•&nbsp; ผู้แจ้ง: <strong>${r.reporter}</strong>
+      &nbsp;•&nbsp; วันที่แจ้ง: ${fmtDate(r.reportDate)}
+      &nbsp;•&nbsp; <span class="${isProgress?'badge-b':'badge-o'}">${r.status}</span>
+    </div>
+    <div class="tl2-wrap">${steps}</div>
+    ${r.note?`<div class="note-bar">📌 ${r.note}</div>`:''}
+  </div>
+</div>`;
+  }).join('');
+}
+
+function buildSteps2(r) {
+  const isEsc      = r.type === 'escalated';
+  const isProgress = r.type === 'progress';
+
+  let steps;
+  if (isEsc) {
+    steps = [
+      {icon:'📝', lbl:'แจ้งซ่อม',           date:r.reportDate,    next:r.assessDate},
+      {icon:'🔍', lbl:'ช่างในประเมิน',       date:r.assessDate,    next:r.contactDate},
+      {icon:'📞', lbl:'ติดต่อช่างนอก',        date:r.contactDate,   next:r.extStartDate},
+      {icon:'🔧', lbl:'ช่างนอกดำเนิน',       date:r.extStartDate,  next:r.extFinishDate},
+      {icon:'✅', lbl:'เสร็จสิ้น',            date:r.extFinishDate, next:null},
+    ];
+  } else {
+    // progress: สลับ กำลังดำเนินการ มาก่อน ช่างในประเมิน
+    steps = [
+      {icon:'📝', lbl:'แจ้งซ่อม',           date:r.reportDate, next:null},
+      {icon:'⚙️', lbl:'กำลังตรวจสอบ',         date:null,         next:null},  // active (ไม่มีวันที่)
+    ];
+  }
+
+  // หา active index = ขั้นตอนแรกที่ยังไม่มีวัน
+  const activeIdx = steps.findIndex(s => !s.date);
+
+  return steps.map((s, i) => {
+    const isDone    = !!s.date;
+    const isActive  = i === activeIdx;
+    const isPending = !isDone && !isActive;
+
+    const cc       = isDone ? 'tl2-done' : isActive ? 'tl2-active' : 'tl2-pending';
+    const stepCls  = isActive ? 'active-step' : isPending ? 'pending-step' : '';
+    const prevHasDate = i > 0 && !!steps[i-1].date;
+    const connDone = prevHasDate ? 'tl2-conn-done' : 'tl2-conn-pending';
+
+    // days บนเส้นเชื่อม = จาก step ก่อนหน้า → step นี้
+    let connDays = null;
+    if (i > 0) {
+      const prev = steps[i-1];
+      if (prev.date && s.date) connDays = daysBetween(prev.date, s.date);
+      else if (prev.date && !s.date && isActive) connDays = daysBetween(prev.date, TODAY);
     }
 
-    const mKey  = reportDate ? `${reportDate.getFullYear()}-${String(reportDate.getMonth()+1).padStart(2,'0')}` : '';
-    const mLbl  = reportDate ? `${reportDate.getMonth()+1}/${reportDate.getFullYear()}` : '';
-    const isExt = !!(r['หมายเหตุ'] && r['หมายเหตุ'].includes('ช่างนอก'));
-
-    return { ...r, _id: idx+1, reportDate, resolveDate, contactDate, workDate, doneDate, totalDays, status, mKey, mLbl, isExt };
-  });
-}
-
-/* =================== BADGE =================== */
-function badge(s) {
-  if (s === 'ดำเนินการแก้ไขแล้ว') return `<span class="badge b-done">✓ แก้ไขแล้ว</span>`;
-  if (s === 'กำลังดำเนินการ')       return `<span class="badge b-inprog">⏳ กำลังดำเนินการ</span>`;
-  if (s.includes('ส่งเรื่องต่อ'))   return `<span class="badge b-esc">🔴 ส่งเรื่องต่อ</span>`;
-  return `<span class="badge">${s||'—'}</span>`;
-}
-
-/* =================== MONTHLY SUMMARY TABLE =================== */
-function renderMonthSummary() {
-  // Always show ALL data (not filtered) for this summary table
-  const mMap = {};
-  allData.forEach(d => {
-    if (!d.mKey) return;
-    if (!mMap[d.mKey]) mMap[d.mKey] = { lbl: d.mLbl, total:0, done:0, inprog:0, esc:0, days:[] };
-    const m = mMap[d.mKey];
-    m.total++;
-    if (d.status === 'ดำเนินการแก้ไขแล้ว') m.done++;
-    else if (d.status === 'กำลังดำเนินการ') m.inprog++;
-    else if (d.status.includes('ส่งเรื่องต่อ')) m.esc++;
-    if (d.totalDays !== null && d.totalDays >= 0) m.days.push(d.totalDays);
-  });
-
-  const months = Object.keys(mMap).sort();
-  const tbody = document.getElementById('monthSummaryBody');
-  const tfoot = document.getElementById('monthSummaryFoot');
-
-  if (!months.length) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:16px;color:#bbb">ไม่มีข้อมูล</td></tr>';
-    tfoot.innerHTML = '';
-    return;
-  }
-
-  tbody.innerHTML = months.map(k => {
-    const m = mMap[k];
-    const pct = m.total > 0 ? Math.round(m.done / m.total * 100) : 0;
-    const avgD = m.days.length ? (m.days.reduce((a,b)=>a+b,0)/m.days.length).toFixed(1) : '—';
-    const pctColor = pct >= 80 ? '#2a7a2a' : pct >= 50 ? '#b86a00' : '#c0392b';
-    return `<tr>
-      <td>${m.lbl}</td>
-      <td class="tot">${m.total}</td>
-      <td class="d">${m.done}</td>
-      <td class="i">${m.inprog}</td>
-      <td class="e">${m.esc}</td>
-      <td><span style="font-weight:700;color:${pctColor}">${pct}%</span></td>
-      <td class="p">${avgD}</td>
-    </tr>`;
-  }).join('');
-
-  // Footer totals
-  const totTotal = allData.length;
-  const totDone  = allData.filter(d => d.status === 'ดำเนินการแก้ไขแล้ว').length;
-  const totIn    = allData.filter(d => d.status === 'กำลังดำเนินการ').length;
-  const totEsc   = allData.filter(d => d.status.includes('ส่งเรื่องต่อ')).length;
-  const totPct   = totTotal > 0 ? Math.round(totDone/totTotal*100) : 0;
-  const allDays  = allData.filter(d => d.totalDays !== null && d.totalDays >= 0).map(d => d.totalDays);
-  const totAvg   = allDays.length ? (allDays.reduce((a,b)=>a+b,0)/allDays.length).toFixed(1) : '—';
-
-  tfoot.innerHTML = `<tr>
-    <td>รวมทั้งหมด</td>
-    <td style="color:#6b9de8">${totTotal}</td>
-    <td style="color:#5bb85d">${totDone}</td>
-    <td style="color:#f5a623">${totIn}</td>
-    <td style="color:#e05c5c">${totEsc}</td>
-    <td style="color:#7c3aed">${totPct}%</td>
-    <td style="color:#555">${totAvg}</td>
-  </tr>`;
-}
-
-/* =================== RENDER PANE 0 =================== */
-function renderPane0() {
-  if (!allData.length) return;
-
-  const mSel  = document.getElementById('fMonth').value;
-  const sSel  = document.getElementById('fStatus').value;
-  const tSel  = document.getElementById('fType').value;
-  const dSel  = document.getElementById('fDept').value;
-
-  // KPI base = ignore status filter
-  const kBase = allData.filter(d =>
-    (!mSel || d.mKey === mSel) &&
-    (!tSel || d['เรื่องแจ้งซ่อม'] === tSel) &&
-    (!dSel || d['แผนก / สถานที่ ที่เจอปัญหา'] === dSel)
-  );
-  const total    = kBase.length;
-  const done     = kBase.filter(d => d.status === 'ดำเนินการแก้ไขแล้ว').length;
-  const inprog   = kBase.filter(d => d.status === 'กำลังดำเนินการ').length;
-  const esc      = kBase.filter(d => d.status.includes('ส่งเรื่องต่อ')).length;
-  const extCount = kBase.filter(d => d.isExt).length;
-  const pct      = total > 0 ? Math.round(done / total * 100) : 0;
-
-  document.getElementById('kpiArea').innerHTML = `
-    <div class="kpi"><div class="num c-blue">${total}</div><div class="lbl">รายการทั้งหมด</div></div>
-    <div class="kpi"><div class="num c-green">${done}</div><div class="lbl">แก้ไขเสร็จแล้ว</div></div>
-    <div class="kpi"><div class="num c-orange">${inprog}</div><div class="lbl">กำลังดำเนินการ</div></div>
-    <div class="kpi"><div class="num c-red">${esc}</div><div class="lbl">ส่งเรื่องต่อ</div></div>
-    <div class="kpi"><div class="num c-purple">${pct}%</div><div class="lbl">อัตราสำเร็จ</div></div>
-    <div class="kpi"><div class="num c-teal">${extCount}</div><div class="lbl">ใช้ช่างนอก</div></div>
-  `;
-
-  // Days per step — ตามเงื่อนไข:
-  // s1: วันแจ้งซ่อม → วันที่ช่างภายในตรวจสอบ/แก้ไข (เฉพาะ done)
-  const s1 = kBase.filter(d => d.status === 'ดำเนินการแก้ไขแล้ว' && d.resolveDate)
-               .map(d => daysBetween(d.reportDate, d.resolveDate))
-               .filter(x => x !== null && x >= 0);
-  // s2: วันที่ช่างภายในตรวจสอบ → วันที่ติดต่อช่างนอก
-  const s2 = kBase.filter(d => d.resolveDate && d.contactDate)
-               .map(d => daysBetween(d.resolveDate, d.contactDate))
-               .filter(x => x !== null && x >= 0);
-  // s3: วันที่ติดต่อช่างนอก → วันที่ช่างนอกดำเนินการ
-  const s3 = kBase.filter(d => d.contactDate && d.workDate)
-               .map(d => daysBetween(d.contactDate, d.workDate))
-               .filter(x => x !== null && x >= 0);
-  // s4: วันที่ช่างนอกดำเนินการ → วันที่ช่างนอกดำเนินการเสร็จ
-  const s4 = kBase.filter(d => d.workDate && d.doneDate)
-               .map(d => daysBetween(d.workDate, d.doneDate))
-               .filter(x => x !== null && x >= 0);
-  // s5: รวมทั้งหมด
-  const s5 = kBase.filter(d => d.totalDays !== null && d.totalDays >= 0).map(d => d.totalDays);
-  const disp = v => v !== null ? v : '—';
-
-  document.getElementById('daysArea').innerHTML = `
-    <div class="day-card s1"><div class="day-num">${disp(avg(s1))}</div><div class="day-lbl">แจ้งซ่อม → ตรวจสอบ/แก้ไข</div><div class="day-cnt">${s1.length} รายการ</div></div>
-    <div class="day-card s2"><div class="day-num">${disp(avg(s2))}</div><div class="day-lbl">ตรวจสอบ → ติดต่อช่างนอก</div><div class="day-cnt">${s2.length} รายการ</div></div>
-    <div class="day-card s3"><div class="day-num">${disp(avg(s3))}</div><div class="day-lbl">ติดต่อช่างนอก → ช่างเริ่มงาน</div><div class="day-cnt">${s3.length} รายการ</div></div>
-    <div class="day-card s4"><div class="day-num">${disp(avg(s4))}</div><div class="day-lbl">ช่างเริ่มงาน → ดำเนินการเสร็จ</div><div class="day-cnt">${s4.length} รายการ</div></div>
-    <div class="day-card s5"><div class="day-num">${disp(avg(s5))}</div><div class="day-lbl">รวมทั้งหมด (แจ้ง → เสร็จ)</div><div class="day-cnt">${s5.length} รายการ</div></div>
-  `;
-
-  // Table
-  const rows = allData.filter(d =>
-    (!mSel || d.mKey === mSel) &&
-    (!sSel || d.status === sSel) &&
-    (!tSel || d['เรื่องแจ้งซ่อม'] === tSel) &&
-    (!dSel || d['แผนก / สถานที่ ที่เจอปัญหา'] === dSel)
-  );
-
-  const tbody = document.getElementById('mainTbody');
-  if (!rows.length) {
-    tbody.innerHTML = '<tr><td colspan="9" class="no-data-row">ไม่มีข้อมูลในเงื่อนไขที่เลือก</td></tr>';
-    return;
-  }
-
-  tbody.innerHTML = rows.map(d => {
-    const shortType = (d['เรื่องแจ้งซ่อม']||'').includes('ไม่ใช่') ? 'ไม่ใช่ครุภัณฑ์' : 'ครุภัณฑ์';
-    const daysColor = d.totalDays === null ? '#bbb' : (d.totalDays > 14 ? '#e05c5c' : '#2a7a2a');
-    const detail = d['รายละเอียดของการแจ้งซ่อม'] || '—';
-    return `
-      <tr>
-        <td style="color:#bbb;font-size:10px">${d._id}</td>
-        <td style="white-space:nowrap">${fmt(d.reportDate)}</td>
-        <td><span class="dept-chip">${d['แผนก / สถานที่ ที่เจอปัญหา']||'—'}</span></td>
-        <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${detail}">${detail}</td>
-        <td><span class="type-chip">${shortType}</span></td>
-        <td>${d['ชื่อผู้แจ้ง']||'—'}</td>
-        <td>${badge(d.status)}</td>
-        <td style="text-align:center">${d.isExt ? '✓' : ''}</td>
-        <td style="text-align:center;font-weight:800;color:${daysColor}">${d.totalDays !== null ? d.totalDays : '—'}</td>
-      </tr>`;
+    return `${i>0?`<div class="tl2-conn-wrap">
+  ${connDays!=null?`<div class="tl2-conn-days">${connDays} วัน</div>`:'<div class="tl2-conn-days" style="visibility:hidden">—</div>'}
+  <div class="tl2-conn ${connDone}"></div>
+</div>`:''}
+<div class="tl2-step ${stepCls}">
+  <div class="tl2-circle ${cc}">${s.icon}</div>
+  <div class="tl2-lbl">${s.lbl}</div>
+  <div class="tl2-date">${s.date?fmtDateShort(s.date):'—'}</div>
+</div>`;
   }).join('');
 }
 
-/* =================== RENDER PANE 1 =================== */
-function renderPane1() {
-  const esc = allData.filter(d => d.status.includes('ส่งเรื่องต่อ'));
-  const today = new Date();
-
-  document.getElementById('escalateStat').innerHTML =
-    `<div style="background:rgba(255,255,255,0.7);padding:10px 20px;border-radius:16px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.08)">
-      <div style="font-size:36px;font-weight:900;color:#c0392b;line-height:1">${esc.length}</div>
-      <div style="font-size:11px;font-weight:700;color:#9c2a2a;margin-top:2px">รายการคงค้าง</div>
-    </div>`;
-
-  if (!esc.length) {
-    document.getElementById('escalateArea').innerHTML = '<div class="empty-msg">✅ ไม่มีรายการที่ต้องส่งเรื่องต่อ</div>';
-    return;
-  }
-
-  const steps = [
-    { key: 'reportDate',  label: 'แจ้งซ่อม',       icon: '📝' },
-    { key: 'resolveDate', label: 'ตรวจสอบ/\nส่งเรื่อง', icon: '🔍' },
-    { key: 'contactDate', label: 'ติดต่อ\nช่างนอก', icon: '📞' },
-    { key: 'workDate',    label: 'ช่างเริ่ม\nดำเนินการ', icon: '🔧' },
-    { key: 'doneDate',    label: 'เสร็จสิ้น',       icon: '✅' },
-  ];
-
-  document.getElementById('escalateArea').innerHTML = esc.map(d => {
-    // Find current active step
-    let activeIdx = 0;
-    steps.forEach((s, i) => { if (d[s.key]) activeIdx = i + 1; });
-    if (d.doneDate) activeIdx = steps.length;
-
-    const elapsed = d.reportDate ? daysBetween(d.reportDate, today) : null;
-
-    const stepsHTML = steps.map((s, i) => {
-      const isDone   = i < activeIdx;
-      const isActive = i === activeIdx;
-      const dateVal  = d[s.key];
-      const nextDate = steps[i+1] ? d[steps[i+1].key] : null;
-      const daysSpent = dateVal
-        ? (nextDate ? daysBetween(dateVal, nextDate) : (isActive ? daysBetween(dateVal, today) : null))
-        : null;
-
-      const cc = isDone ? 'sc-done' : (isActive ? 'sc-active' : 'sc-pending');
-      const connCls = i <= activeIdx - 1 ? 'done' : '';
-
-      return `
-        ${i > 0 ? `<div class="connector ${connCls}"></div>` : ''}
-        <div class="step-box">
-          <div class="step-circle ${cc}">${s.icon}</div>
-          <div class="step-lbl">${s.label}</div>
-          <div class="step-date">${dateVal ? fmt(dateVal) : '—'}</div>
-          ${daysSpent !== null ? `<div class="step-days-spent">${daysSpent} วัน</div>` : ''}
-        </div>`;
-    }).join('');
-
-    const shortType = (d['เรื่องแจ้งซ่อม']||'').includes('ไม่ใช่') ? 'ไม่ใช่ครุภัณฑ์' : 'ครุภัณฑ์';
-
-    const cardId = `tc-${d._id}`;
-    return `
-      <div class="track-card" id="${cardId}">
-        <div class="track-summary" onclick="toggleCard('${cardId}')">
-          <div class="track-title">${d['รายละเอียดของการแจ้งซ่อม']||'—'}</div>
-          <div class="track-summary-right">
-            <div class="track-elapsed">
-              ${elapsed !== null ? elapsed : '—'}
-              <span class="elapsed-unit">วันที่ผ่านมา</span>
-            </div>
-            <div class="track-chevron">▾</div>
-          </div>
-        </div>
-        <div class="track-detail">
-          <div class="track-meta">
-            <span class="dept-chip">${d['แผนก / สถานที่ ที่เจอปัญหา']||'—'}</span>
-            &nbsp;• ${shortType} &nbsp;• ผู้แจ้ง: <strong>${d['ชื่อผู้แจ้ง']||'—'}</strong>
-            &nbsp;• แจ้งวันที่: ${fmt(d.reportDate)}
-          </div>
-          <div class="timeline">${stepsHTML}</div>
-          ${d['หมายเหตุ'] ? `<div class="note-box">📌 ${d['หมายเหตุ']}</div>` : ''}
-        </div>
-      </div>`;
-  }).join('');
-}
-
-/* =================== TOGGLE CARD =================== */
-function toggleCard(id) {
+function toggleCard2(id) {
   document.getElementById(id).classList.toggle('open');
 }
 
-/* =================== RENDER PANE 2 =================== */
-function destroyChart(id) {
-  if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; }
+// ── PAGE 3 ────────────────────────────────────
+function renderP3() {
+  // ช่างใน: อัตราสำเร็จ = done / (done + escalated)
+  const intDone     = data.filter(r=>r.type==='done');
+  const intEscalated= data.filter(r=>r.type==='escalated');
+  const intTotal    = intDone.length + intEscalated.length;
+  const intRate     = intTotal>0 ? Math.round(intDone.length/intTotal*100)+'%' : '—';
+  // วันเฉลี่ยประเมิน = avg intDays ของ done + escalated ที่มีวันประเมิน
+  const intAvgDays  = calcAvg([...intDone,...intEscalated].map(r=>r.intDays));
+  document.getElementById('p3-int-done').textContent = intRate;
+  document.getElementById('p3-int-avg').textContent  = intAvgDays!=null ? intAvgDays : '—';
+
+  // ช่างนอก: นับเฉพาะที่มี extFinishDate + วันเฉลี่ย ติดต่อ→เสร็จ (contactDate→extFinishDate)
+  const extDoneItems  = data.filter(r=>r.type==='escalated'&&r.extDone);
+  const extContactAvg = calcAvg(extDoneItems.map(r=>r.extContactToDone));
+  document.getElementById('p3-ext-done').textContent = extDoneItems.length;
+  document.getElementById('p3-ext-avg').textContent  = extContactAvg!=null ? extContactAvg : '—';
+
+  // Stage breakdown ในกล่องช่างนอก
+  const esc = data.filter(r=>r.type==='escalated');
+  const extStages=[
+    {lbl:'① ประเมิน → ติดต่อช่างนอก', vals:esc.map(r=>r.extS1)},
+    {lbl:'② ติดต่อ → ช่างนอกเริ่มงาน', vals:esc.map(r=>r.extS2)},
+    {lbl:'③ ช่างนอกดำเนิน → เสร็จสิ้น', vals:esc.map(r=>r.extS3)},
+  ];
+  document.getElementById('p3-ext-stages').innerHTML=`
+    <div style="font-size:11px;font-weight:700;color:#9c2a2a;margin:10px 0 4px;padding-top:10px;border-top:2px solid #fee2e2">⏱️ เวลาเฉลี่ยแต่ละขั้นตอน</div>
+    ${extStages.map(s=>{
+      const avg=calcAvg(s.vals); const cnt=s.vals.filter(v=>v!=null).length;
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 2px;border-top:1px solid #fef2f2;font-size:12px">
+        <span style="color:#6b7280">${s.lbl}</span>
+        <span style="font-weight:700;color:#374151">${avg!=null?avg+' <span style="font-size:10px;font-weight:400;color:#9ca3af">วัน (n='+cnt+')</span>':'<span style="color:#9ca3af">—</span>'}</span>
+      </div>`;
+    }).join('')}`;
+
+  renderIntChart(); renderCmpChart();
+  renderTypeBarChart('bar1Chart','bar1','ครุภัณฑ์'); renderTypeBarChart('bar2Chart','bar2','ไม่ใช่ครุภัณฑ์');
+  renderTypePctLine('line1Chart','line1','ครุภัณฑ์'); renderTypePctLine('line2Chart','line2','ไม่ใช่ครุภัณฑ์');
 }
-
-function renderPane2() {
-  // Exclude กำลังดำเนินการ from statistics (rule: show in ภาพรวม only)
-  const statData = allData.filter(d => d.status !== 'กำลังดำเนินการ');
-
-  // Build month map (statData only)
-  const mMap = {};
-  statData.forEach(d => {
-    if (!d.mKey) return;
-    if (!mMap[d.mKey]) mMap[d.mKey] = { lbl: d.mLbl, total:0, done:0, inprog:0, esc:0, daysArr:[], s1:[], s2:[], s3:[], s4:[] };
-    const m = mMap[d.mKey];
-    m.total++;
-    if (d.status === 'ดำเนินการแก้ไขแล้ว') m.done++;
-    else if (d.status === 'กำลังดำเนินการ') m.inprog++;
-    else if (d.status.includes('ส่งเรื่องต่อ')) m.esc++;
-    if (d.totalDays !== null && d.totalDays >= 0) m.daysArr.push(d.totalDays);
-
-    // s1: แจ้งซ่อม → ช่างภายในตรวจสอบ/แก้ไข (เฉพาะ done)
-    if (d.status === 'ดำเนินการแก้ไขแล้ว' && d.resolveDate) {
-      const v1 = daysBetween(d.reportDate, d.resolveDate);
-      if (v1 !== null && v1 >= 0) m.s1.push(v1);
-    }
-    // s2: ช่างภายในตรวจสอบ → ติดต่อช่างนอก
-    if (d.resolveDate && d.contactDate) {
-      const v2 = daysBetween(d.resolveDate, d.contactDate);
-      if (v2 !== null && v2 >= 0) m.s2.push(v2);
-    }
-    // s3: ติดต่อช่างนอก → ช่างนอกดำเนินการ
-    if (d.contactDate && d.workDate) {
-      const v3 = daysBetween(d.contactDate, d.workDate);
-      if (v3 !== null && v3 >= 0) m.s3.push(v3);
-    }
-    // s4: ช่างนอกดำเนินการ → เสร็จ
-    if (d.workDate && d.doneDate) {
-      const v4 = daysBetween(d.workDate, d.doneDate);
-      if (v4 !== null && v4 >= 0) m.s4.push(v4);
+function renderIntChart(){
+  const items=data.filter(r=>(r.type==='done'||r.type==='escalated')&&r.reportMonth);
+  const months=[...new Set(items.map(r=>r.reportMonth))].sort();
+  killChart('int');
+  charts['int']=new Chart(document.getElementById('intChart').getContext('2d'),{type:'bar',data:{labels:months.map(fmtMonthKey),datasets:[
+    {label:'รับแจ้ง (ประเมินแล้ว)',data:months.map(m=>items.filter(r=>r.reportMonth===m).length),backgroundColor:'#A8D8EA',borderColor:'#7EC8E3',borderWidth:1},
+    {label:'ช่างใน แก้ไขสำเร็จ',data:months.map(m=>items.filter(r=>r.reportMonth===m&&r.type==='done').length),backgroundColor:'#B5EAD7',borderColor:'#6ee7b7',borderWidth:1}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10},padding:8}}},scales:{x:{grid:{color:'#f3f4f6'},ticks:{font:{size:10}}},y:{grid:{color:'#f3f4f6'},ticks:{stepSize:1,font:{size:10}},min:0}}}});
+}
+function renderExtChart(){
+  const items=data.filter(r=>r.type==='escalated'&&r.reportMonth);
+  const months=[...new Set(items.map(r=>r.reportMonth))].sort();
+  killChart('ext');
+  charts['ext']=new Chart(document.getElementById('extChart').getContext('2d'),{type:'bar',data:{labels:months.map(fmtMonthKey),datasets:[
+    {label:'ส่งเรื่องต่อช่างนอก',data:months.map(m=>items.filter(r=>r.reportMonth===m).length),backgroundColor:'#FFB7B2',borderColor:'#f87171',borderWidth:1},
+    {label:'ช่างนอก แก้ไขสำเร็จ',data:months.map(m=>items.filter(r=>r.reportMonth===m&&r.extDone).length),backgroundColor:'#C7CEEA',borderColor:'#a5b4fc',borderWidth:1}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10},padding:8}}},scales:{x:{grid:{color:'#f3f4f6'},ticks:{font:{size:10}}},y:{grid:{color:'#f3f4f6'},ticks:{stepSize:1,font:{size:10}},min:0}}}});
+}
+function renderStages(){
+  const esc=data.filter(r=>r.type==='escalated');
+  if(!esc.length){document.getElementById('stage-bars').innerHTML='<div class="empty-msg">ไม่มีข้อมูล</div>';return;}
+  const stages=[
+    {label:'① รายงาน → ช่างภายในประเมิน',vals:esc.map(r=>r.intDays),color:'#A8D8EA'},
+    {label:'② ประเมิน → ติดต่อช่างนอก',vals:esc.map(r=>r.extS1),color:'#FFDAC1'},
+    {label:'③ ติดต่อ → ช่างนอกเริ่มงาน',vals:esc.map(r=>r.extS2),color:'#FFB7B2'},
+    {label:'④ ดำเนินการ → เสร็จสิ้น',vals:esc.map(r=>r.extS3),color:'#B5EAD7'},
+  ];
+  const avgs=stages.map(s=>calcAvg(s.vals)); const maxAvg=Math.max(...avgs.filter(a=>a!=null),1);
+  document.getElementById('stage-bars').innerHTML=stages.map((s,i)=>{
+    const a=avgs[i]; const cnt=s.vals.filter(v=>v!=null).length; const pct=a!=null?Math.round(a/maxAvg*100):0;
+    return `<div class="stage-item"><div class="stage-top"><div class="stage-lbl">${s.label}</div><div class="stage-val" style="color:#374151">${a!=null?`<strong>${a}</strong> วัน`:'<span style="color:#9ca3af">—</span>'}<span class="stage-n">n=${cnt}</span></div></div><div class="stage-track"><div class="stage-fill" style="width:${pct}%;background:${s.color}"></div></div></div>`;
+  }).join('');
+}
+function renderCmpChart(){
+  // % ช่างในแก้ไขสำเร็จ = done / (done+escalated) รายเดือน
+  const eligible=data.filter(r=>r.type==='done'||r.type==='escalated');
+  const months=[...new Set(eligible.map(r=>r.reportMonth).filter(Boolean))].sort();
+  const pctData=months.map(m=>{
+    const mItems=eligible.filter(r=>r.reportMonth===m);
+    const doneCount=mItems.filter(r=>r.type==='done').length;
+    return mItems.length>0?Math.round(doneCount/mItems.length*100):0;
+  });
+  killChart('cmp');
+  charts['cmp']=new Chart(document.getElementById('cmpChart').getContext('2d'),{
+    type:'line',
+    data:{labels:months.map(fmtMonthKey),datasets:[
+      {label:'% ช่างในแก้ไขสำเร็จ (สำเร็จ / สำเร็จ+ส่งต่อ)',
+       data:pctData,
+       borderColor:'#4ade80',backgroundColor:'rgba(181,234,215,0.2)',
+       tension:0,pointRadius:7,pointBackgroundColor:'#4ade80',
+       fill:true,borderWidth:2.5}
+    ]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{position:'bottom',labels:{font:{size:11},padding:12}},
+        tooltip:{callbacks:{label:ctx=>`${ctx.parsed.y}%`}}
+      },
+      scales:{
+        x:{grid:{color:'#f3f4f6'},ticks:{font:{size:11}}},
+        y:{grid:{color:'#f3f4f6'},ticks:{stepSize:20,font:{size:11},callback:v=>v+'%'},min:0,max:100}
+      }
     }
   });
+}
 
-  const months = Object.keys(mMap).sort();
-  const labels = months.map(k => mMap[k].lbl);
-  const TICK = { font: { size: 10 }, color: '#8898aa' };
-
-  // Chart: Count stacked bar
-  destroyChart('cCount');
-  chartInstances['cCount'] = new Chart(document.getElementById('cCount'), {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [
-        { label: 'แก้ไขแล้ว',     data: months.map(k => mMap[k].done),   backgroundColor: '#a8d8a8' },
-        { label: 'กำลังดำเนินการ', data: months.map(k => mMap[k].inprog), backgroundColor: '#ffd08a' },
-        { label: 'ส่งเรื่องต่อ',   data: months.map(k => mMap[k].esc),    backgroundColor: '#f4a0a0' },
+function renderTypeBarChart(canvasId, chartKey, typeLabel){
+  // กราฟแท่ง: รายการแจ้งซ่อม (done+escalated) vs ช่างในซ่อมสำเร็จ (done) รายเดือน
+  const eligible = data.filter(r=>(r.type==='done'||r.type==='escalated')&&r.shortType===typeLabel);
+  const months   = [...new Set(eligible.map(r=>r.reportMonth).filter(Boolean))].sort();
+  const totalData= months.map(m=>eligible.filter(r=>r.reportMonth===m).length);
+  const doneData = months.map(m=>eligible.filter(r=>r.reportMonth===m&&r.type==='done').length);
+  killChart(chartKey);
+  charts[chartKey]=new Chart(document.getElementById(canvasId).getContext('2d'),{
+    type:'bar',
+    data:{
+      labels:months.map(fmtMonthKey),
+      datasets:[
+        {label:'📋 รายการแจ้งซ่อม', data:totalData, backgroundColor:'#A8D8EA', borderColor:'#7EC8E3', borderWidth:1},
+        {label:'✅ ช่างในซ่อมสำเร็จ', data:doneData, backgroundColor:'#B5EAD7', borderColor:'#6ee7b7', borderWidth:1},
       ]
     },
-    options: {
-      responsive: true, maintainAspectRatio: true,
-      plugins: { legend: { labels: { font:{size:10} } } },
-      scales: {
-        x: { stacked: true, ticks: TICK },
-        y: { stacked: true, ticks: { ...TICK, stepSize: 1 }, beginAtZero: true }
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{font:{size:11},padding:10}}},
+      scales:{
+        x:{grid:{color:'#f3f4f6'}, ticks:{font:{size:10}}},
+        y:{grid:{color:'#f3f4f6'}, ticks:{stepSize:1,font:{size:11}}, min:0}
       }
     }
   });
+}
 
-  // Chart: Pie (total)
-  const totDone   = statData.filter(d => d.status === 'ดำเนินการแก้ไขแล้ว').length;
-  const totEsc    = statData.filter(d => d.status.includes('ส่งเรื่องต่อ')).length;
-  destroyChart('cPie');
-  chartInstances['cPie'] = new Chart(document.getElementById('cPie'), {
-    type: 'doughnut',
-    data: {
-      labels: ['แก้ไขแล้ว', 'ส่งเรื่องต่อ'],
-      datasets: [{ data: [totDone, totEsc], backgroundColor: ['#a8d8a8','#f4a0a0'], borderWidth: 2, borderColor: '#fff' }]
-    },
-    options: { responsive: true, plugins: { legend: { labels: { font:{size:10} } } } }
+function renderTypePctLine(canvasId, chartKey, typeLabel){
+  // กราฟเส้น: % สำเร็จ = done/(done+escalated) รายเดือน
+  const eligible = data.filter(r=>(r.type==='done'||r.type==='escalated')&&r.shortType===typeLabel);
+  const months   = [...new Set(eligible.map(r=>r.reportMonth).filter(Boolean))].sort();
+  const pctData  = months.map(m=>{
+    const mItems=eligible.filter(r=>r.reportMonth===m);
+    const doneCount=mItems.filter(r=>r.type==='done').length;
+    return mItems.length>0?Math.round(doneCount/mItems.length*100):0;
   });
-
-  // Chart: Avg days — store data globally for dropdown access
-  const STAGE_CONFIG = {
-    s1:    { label: 'วันที่ช่างภายในประเมิน (แจ้งซ่อม → ประเมิน)',           color: '#90c2e7', key: 's1' },
-    s2:    { label: 'วันที่ติดต่อช่างนอก (ประเมิน → ติดต่อช่างนอก)',          color: '#ce93d8', key: 's2' },
-    s3:    { label: 'วันที่ช่างนอกดำเนินการ (ติดต่อช่างนอก → ดำเนินการ)',    color: '#ffd08a', key: 's3' },
-    s4:    { label: 'วันที่ช่างนอกดำเนินการเสร็จ (ดำเนินการ → เสร็จ)',       color: '#a8d8a8', key: 's4' },
-    total: { label: 'รวมทั้งหมด (แจ้งซ่อม → เสร็จ)',                        color: '#f4a0a0', key: 'daysArr' },
-  };
-  // Store in global so dropdown onchange can access
-  window._avgDays = { mMap, months, labels, STAGE_CONFIG, TICK };
-  renderAvgDaysChart();
-
-  // Chart: Type bar
-  const typeMap = {};
-  allData.forEach(d => {
-    const t = (d['เรื่องแจ้งซ่อม']||'อื่นๆ').includes('ไม่ใช่') ? 'ไม่ใช่ครุภัณฑ์' : 'ครุภัณฑ์';
-    typeMap[t] = (typeMap[t]||0) + 1;
-  });
-  destroyChart('cType');
-  chartInstances['cType'] = new Chart(document.getElementById('cType'), {
-    type: 'bar',
-    data: {
-      labels: Object.keys(typeMap),
-      datasets: [{ label: 'จำนวน', data: Object.values(typeMap), backgroundColor: ['#90c2e7','#ce93d8'] }]
-    },
-    options: { responsive: true, indexAxis:'y', plugins: { legend:{display:false} }, scales: { x:{ ticks:{...TICK, stepSize:1}, beginAtZero:true } } }
-  });
-
-  // Charts: Success rate by type × month — split into 2 charts
-  const MONTH_NAMES = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
-  const months_ts = [...new Set(statData.map(d => d.mKey).filter(Boolean))].sort();
-
-  function buildTypeChart(canvasId, typeFilter, barColor) {
-    const map = {};
-    // total per type (denominator) = all items of that type across all months
-    let grandTotal = 0;
-    statData.forEach(d => {
-      if (!d.mKey) return;
-      const isNon = (d['เรื่องแจ้งซ่อม']||'').includes('ไม่ใช่');
-      if (typeFilter === 'non' && !isNon) return;
-      if (typeFilter === 'med' && isNon) return;
-      if (!map[d.mKey]) map[d.mKey] = { done:0, total:0 };
-      map[d.mKey].total++;
-      grandTotal++;
-      if (d.status === 'ดำเนินการแก้ไขแล้ว') map[d.mKey].done++;
-    });
-    const mKeys   = months_ts.filter(m => map[m]);
-    const mLabels = mKeys.map(m => {
-      const [yr, mo] = m.split('-');
-      return MONTH_NAMES[+mo-1] + ' ' + (+yr+543).toString().slice(-2);
-    });
-    // success rate = done / total (per month)
-    const rates = mKeys.map(k => map[k].total>0 ? +(map[k].done/map[k].total*100).toFixed(1) : 0);
-    destroyChart(canvasId);
-    chartInstances[canvasId] = new Chart(document.getElementById(canvasId), {
-      type: 'bar',
-      data: {
-        labels: mLabels,
-        datasets: [{
-          label: 'อัตราความสำเร็จ (%)',
-          data: rates,
-          backgroundColor: barColor,
-          borderRadius: 8,
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { display: false },
-          topLabel: { display:true, suffix:'%', fontSize:12, offset:5, skipZero:false },
-          tooltip: {
-            callbacks: {
-              label: items => {
-                const k = mKeys[items.dataIndex];
-                return 'สำเร็จ ' + (map[k]?.done||0) + ' / ' + (map[k]?.total||0) + ' รายการ (' + items.raw + '%)';
-              }
-            }
-          }
-        },
-        scales: {
-          x: { ticks: { ...TICK, maxRotation:0 } },
-          y: { min:0, max:100, ticks:{ ...TICK, callback: v=>v+'%' }, title:{ display:true, text:'อัตราความสำเร็จ (%)', font:{size:10} } }
-        }
-      }
-    });
-  }
-  buildTypeChart('cTypeSuccess1', 'non', '#a8c8f0');
-  buildTypeChart('cTypeSuccess2', 'med', '#f0c8a0');
-
-  // Chart: Dept top bar
-  const deptMap = {};
-  statData.forEach(d => { const dep = d['แผนก / สถานที่ ที่เจอปัญหา']||'ไม่ระบุ'; deptMap[dep] = (deptMap[dep]||0)+1; });
-  const topDept = Object.entries(deptMap).sort((a,b) => b[1]-a[1]).slice(0,6);
-  destroyChart('cDept');
-  chartInstances['cDept'] = new Chart(document.getElementById('cDept'), {
-    type: 'bar',
-    data: {
-      labels: topDept.map(d=>d[0]),
-      datasets: [{ label: 'จำนวน', data: topDept.map(d=>d[1]), backgroundColor: '#a8d8a8' }]
-    },
-    options: { responsive: true, indexAxis:'y', plugins: { legend:{display:false} }, scales: { x:{ ticks:{...TICK, stepSize:1}, beginAtZero:true } } }
-  });
-
-  // Chart: Success rate line
-  destroyChart('cSuccess');
-  chartInstances['cSuccess'] = new Chart(document.getElementById('cSuccess'), {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [{
-        label: 'อัตราสำเร็จ (%)',
-        data: months.map(k => {
-          const m = mMap[k];
-          return m.total > 0 ? +(m.done / m.total * 100).toFixed(1) : 0;
-        }),
-        borderColor: '#5bb85d',
-        backgroundColor: 'rgba(91,184,93,0.1)',
-        tension: 0,
-        fill: true,
-        pointRadius: 5,
-        pointBackgroundColor: '#5bb85d',
+  killChart(chartKey);
+  charts[chartKey]=new Chart(document.getElementById(canvasId).getContext('2d'),{
+    type:'line',
+    data:{
+      labels:months.map(fmtMonthKey),
+      datasets:[{
+        label:'% ช่างในซ่อมสำเร็จ',
+        data:pctData,
+        borderColor:'#f59e0b', backgroundColor:'rgba(253,230,138,0.2)',
+        tension:0, pointRadius:7, pointBackgroundColor:'#f59e0b', fill:true, borderWidth:2.5
       }]
     },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { labels: { font:{size:10} } },
-        topLabel: { display: true, suffix: '%', fontSize: 11, offset: 6, color: '#2a7a2a' }
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{position:'bottom',labels:{font:{size:11},padding:10}},
+        tooltip:{callbacks:{label:ctx=>`${ctx.parsed.y}%`}}
       },
-      scales: {
-        x: { ticks: TICK },
-        y: { min:0, max:100, ticks: { ...TICK, callback: v => v+'%' }, title: { display:true, text:'%', font:{size:10} } }
+      scales:{
+        x:{grid:{color:'#f3f4f6'}, ticks:{font:{size:10}}},
+        y:{grid:{color:'#f3f4f6'}, ticks:{stepSize:25,font:{size:11},callback:v=>v+'%'}, min:0, max:100}
       }
     }
   });
 }
 
-/* =================== POPULATE DROPDOWNS =================== */
-function populateDropdowns() {
-  const months = [...new Set(allData.map(d => d.mKey).filter(Boolean))].sort();
-  const mSel = document.getElementById('fMonth');
-  months.forEach(m => {
-    const d = allData.find(x => x.mKey === m);
-    mSel.innerHTML += `<option value="${m}">${d.mLbl}</option>`;
-  });
+function renderTypeLineChart(){
+  // % สำเร็จรายเดือน แยกตามประเภทงาน (ครุภัณฑ์ vs ไม่ใช่ครุภัณฑ์)
+  const eligible = data.filter(r=>r.type==='done'||r.type==='escalated');
+  const months   = [...new Set(eligible.map(r=>r.reportMonth).filter(Boolean))].sort();
+  const types    = ['ครุภัณฑ์','ไม่ใช่ครุภัณฑ์'];
+  const colors   = ['#A8D8EA','#FFB7B2'];
+  const ptColors = ['#3b82f6','#ef4444'];
 
-  const types = [...new Set(allData.map(d => d['เรื่องแจ้งซ่อม']).filter(Boolean))];
-  const tSel = document.getElementById('fType');
-  types.forEach(t => {
-    const lbl = t.includes('ไม่ใช่') ? 'ไม่ใช่ครุภัณฑ์' : 'ครุภัณฑ์';
-    tSel.innerHTML += `<option value="${t}">${lbl}</option>`;
-  });
+  const datasets = types.map((t,ti)=>({
+    label: `% สำเร็จ — ${t}`,
+    data: months.map(m=>{
+      const mItems = eligible.filter(r=>r.reportMonth===m&&r.shortType===t);
+      const doneCount = mItems.filter(r=>r.type==='done').length;
+      return mItems.length>0 ? Math.round(doneCount/mItems.length*100) : null;
+    }),
+    borderColor: ptColors[ti],
+    backgroundColor: colors[ti]+'55',
+    tension: 0,
+    pointRadius: 7,
+    pointBackgroundColor: ptColors[ti],
+    fill: false,
+    borderWidth: 2.5,
+    spanGaps: true,
+  }));
 
-  const depts = [...new Set(allData.map(d => d['แผนก / สถานที่ ที่เจอปัญหา']).filter(Boolean))].sort();
-  const dSel = document.getElementById('fDept');
-  depts.forEach(dep => { dSel.innerHTML += `<option value="${dep}">${dep}</option>`; });
-}
-
-/* =================== RESPONSE EXTRACTOR =================== */
-// callMcpTool can return many formats — handle all of them
-function extractText(res) {
-  if (!res) return '';
-
-  // Helper: try JSON.parse for fileContent / content / text keys
-  function tryJson(s) {
-    if (typeof s !== 'string') return s;
-    try {
-      const p = JSON.parse(s);
-      if (p && typeof p === 'object') {
-        const v = p.fileContent || p.content || p.text || p.data || '';
-        if (v) return v;
+  killChart('typeLine');
+  charts['typeLine']=new Chart(document.getElementById('typeLineChart').getContext('2d'),{
+    type:'line',
+    data:{labels:months.map(fmtMonthKey), datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{position:'bottom',labels:{font:{size:11},padding:12}},
+        tooltip:{callbacks:{label:ctx=>ctx.parsed.y!=null?`${ctx.parsed.y}%`:'ไม่มีข้อมูล'}}
+      },
+      scales:{
+        x:{grid:{color:'#f3f4f6'},ticks:{font:{size:11}}},
+        y:{grid:{color:'#f3f4f6'},ticks:{stepSize:20,font:{size:11},callback:v=>v+'%'},min:0,max:100}
       }
-    } catch {}
-    return s;
-  }
-
-  // Array of content-blocks [{type:'text', text:'...'}]
-  if (Array.isArray(res)) {
-    const joined = res.map(b => {
-      if (!b) return '';
-      if (b.type === 'text') return b.text || '';
-      if (typeof b === 'string') return b;
-      return b.content || b.text || b.fileContent || '';
-    }).join('');
-    return tryJson(joined) || joined;
-  }
-
-  // Plain string (JSON wrapper or raw table)
-  if (typeof res === 'string') return tryJson(res);
-
-  // Object — if .content is an array of blocks, recurse into it
-  if (Array.isArray(res.content)) return extractText(res.content);
-
-  // Direct string keys
-  const direct = res.fileContent || res.text || res.data || '';
-  if (direct) return tryJson(direct) || direct;
-
-  // Last resort: find longest string value in the object
-  const best = Object.values(res)
-    .filter(v => typeof v === 'string' && v.length > 30)
-    .sort((a, b) => b.length - a.length)[0] || '';
-  return tryJson(best) || best;
-}
-
-/* =================== CSV PARSER (fallback) =================== */
-function parseCSV(csv) {
-  const lines = csv.split('\n').filter(l => l.trim());
-  if (lines.length < 2) return [];
-  const splitLine = l => {
-    const cells = []; let cur = '', inQ = false;
-    for (const c of l) {
-      if (c === '"') { inQ = !inQ; }
-      else if (c === ',' && !inQ) { cells.push(cur.trim()); cur = ''; }
-      else cur += c;
     }
-    cells.push(cur.trim());
-    return cells;
-  };
-  const headers = splitLine(lines[0]);
-  return lines.slice(1).map(l => {
-    const cells = splitLine(l);
-    const obj = {};
-    headers.forEach((h, i) => { obj[h] = cells[i] || ''; });
-    return obj;
   });
 }
 
-/* =================== CONFIG =================== */
-// หลังติดตั้ง Google Apps Script แล้ว วาง URL ที่นี่:
-const APPS_SCRIPT_URL = '';
-// ตัวอย่าง: 'https://script.google.com/macros/s/AKfy.../exec'
+function renderTypeChart(){
+  const types = ['ครุภัณฑ์','ไม่ใช่ครุภัณฑ์'];
+  killChart('type');
+  // denominator = done + escalated (ไม่นับ progress)
+  const doneData = types.map(t=>data.filter(r=>r.shortType===t&&r.type==='done').length);
+  const escData  = types.map(t=>data.filter(r=>r.shortType===t&&r.type==='escalated').length);
+  const rateLabels = types.map((_,i)=>{
+    const tot=doneData[i]+escData[i];
+    return tot>0 ? `(สำเร็จ ${Math.round(doneData[i]/tot*100)}%)` : '(ไม่มีข้อมูล)';
+  });
+  charts['type']=new Chart(document.getElementById('typeChart').getContext('2d'),{
+    type:'bar',
+    data:{
+      labels: types.map((t,i)=>[t, rateLabels[i]]),
+      datasets:[
+        {label:'✅ ช่างในแก้ไขสำเร็จ',
+         data:doneData,
+         backgroundColor:'#B5EAD7',borderColor:'#6ee7b7',borderWidth:1},
+        {label:'📤 ส่งต่อช่างนอก',
+         data:escData,
+         backgroundColor:'#FFB7B2',borderColor:'#f87171',borderWidth:1},
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{font:{size:11},padding:12}}},
+      scales:{
+        x:{grid:{color:'#f3f4f6'},ticks:{font:{size:12},color:'#374151'}},
+        y:{grid:{color:'#f3f4f6'},ticks:{stepSize:1,font:{size:11}},min:0}
+      }
+    }
+  });
+}
 
-/* =================== MAIN LOAD =================== */
+// ── P3 ACCORDION ─────────────────────────────
+const p3Open = { int: true, ext: false };
+function toggleP3Section(sec) {
+  p3Open[sec] = !p3Open[sec];
+  const body  = document.getElementById('p3-sec-'  + sec);
+  const chev  = document.getElementById('p3-chev-' + sec);
+  body.classList.toggle('open', p3Open[sec]);
+  chev.textContent = p3Open[sec] ? '▲' : '▼';
+  // re-render charts for ช่างใน section when opening (canvas may have been hidden)
+  if (sec === 'int' && p3Open[sec] && data.length) {
+    setTimeout(()=>{
+      renderIntChart(); renderCmpChart();
+      renderTypeBarChart('bar1Chart','bar1','ครุภัณฑ์');
+      renderTypeBarChart('bar2Chart','bar2','ไม่ใช่ครุภัณฑ์');
+      renderTypePctLine('line1Chart','line1','ครุภัณฑ์');
+      renderTypePctLine('line2Chart','line2','ไม่ใช่ครุภัณฑ์');
+    }, 50);
+  }
+}
+
+// ── TABS ──────────────────────────────────────
+function switchTab(n,btn){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active'); document.getElementById('p'+n).classList.add('active');
+  if(n===3&&data.length) setTimeout(renderP3,50);
+  if(n===1&&data.length) setTimeout(renderP1Chart,50);
+}
+
+// ── LOAD DATA ─────────────────────────────────
 async function loadData() {
-  const FILE_ID = '1JrVY0MHVRq4eAyi-fjKQVRW7LCz8v2vJlQpwm41Iy6E';
-
-  const setErr = msg => {
-    document.getElementById('lastUpdate').textContent = msg;
-    document.getElementById('mainTbody').innerHTML = `<tr><td colspan="9" class="no-data-row">${msg}</td></tr>`;
-    document.getElementById('escalateArea').innerHTML = `<div class="empty-msg">${msg}</div>`;
-  };
-
-  const isCowork = typeof window.cowork !== 'undefined' &&
-                   typeof window.cowork.callMcpTool === 'function';
-
+  const setStatus=msg=>{document.getElementById('last-update').textContent=msg;};
+  setStatus('กำลังโหลดจาก Google Drive...');
+  let rows=[];
   try {
-    let rows = [];
+    const res1=await window.cowork.callMcpTool(TOOL_READ,{fileId:FILE_ID});
+    console.log('read_file raw:',JSON.stringify(res1).slice(0,200));
+    const text1=extractText(res1);
+    if(text1&&text1.includes('|')) rows=parseMarkdown(text1);
+    else if(text1&&text1.includes(',')) rows=parseCSV(text1);
+    console.log('markdown rows:',rows.length);
+  } catch(e1){ console.warn('read_file_content failed:',e1.message); }
 
-    /* ====== MODE A: inside Cowork app → use MCP ====== */
-    if (isCowork) {
-      document.getElementById('lastUpdate').textContent = 'กำลังโหลดจาก Google Drive (Cowork)...';
-      let debugInfo = '';
-
-      try {
-        const res1 = await window.cowork.callMcpTool(
-          'mcp__2ab58198-5cf1-41c3-ad51-21c43099d588__read_file_content',
-          { fileId: FILE_ID }
-        );
-        debugInfo = 'type:' + typeof res1 + ' | ' + JSON.stringify(res1).slice(0, 200);
-        const text1 = extractText(res1);
-        if (text1 && text1.includes('|')) rows = parseMarkdown(text1);
-        else if (text1 && text1.includes(',')) rows = parseCSV(text1);
-      } catch (e1) { debugInfo += ' | err:' + e1.message; }
-
-      if (!rows.length) {
-        try {
-          const res2 = await window.cowork.callMcpTool(
-            'mcp__2ab58198-5cf1-41c3-ad51-21c43099d588__download_file_content',
-            { fileId: FILE_ID, exportMimeType: 'text/csv' }
-          );
-          debugInfo += ' | dl:' + JSON.stringify(res2).slice(0, 100);
-          const raw2 = extractText(res2);
-          let csvText = '';
-          try { csvText = atob(raw2); } catch { csvText = raw2; }
-          if (csvText && csvText.length > 10) rows = parseCSV(csvText);
-        } catch (e2) { debugInfo += ' | dl_err:' + e2.message; }
-      }
-
-      if (!rows.length) {
-        throw new Error('ไม่สามารถดึงข้อมูลได้ — Reload อีกครั้ง [' + debugInfo.slice(0, 150) + ']');
-      }
-
-    /* ====== MODE B: standalone / GitHub Pages ====== */
-    } else {
-      document.getElementById('lastUpdate').textContent = 'กำลังโหลดข้อมูล...';
-
-      /* -- B1: Apps Script URL -- */
-      if (APPS_SCRIPT_URL) {
-
-        /* B1a: JSON fetch (ปกติ) */
-        try {
-          const resp = await fetch(APPS_SCRIPT_URL, { redirect: 'follow' });
-          if (resp.ok) {
-            const txt = await resp.text();
-            console.log('Apps Script raw (first 300):', txt.slice(0,300));
-            if (txt.trim().startsWith('{') || txt.trim().startsWith('[')) {
-              const json = JSON.parse(txt);
-              if (json.rows && json.rows.length) { rows = json.rows; }
-            }
-          }
-        } catch (e1) { console.warn('B1a fetch failed:', e1.message); }
-
-        /* B1b: JSONP fallback (เมื่อ CORS บล็อก JSON) */
-        if (!rows.length) {
-          console.log('Trying JSONP...');
-          rows = await new Promise(resolve => {
-            const cb = '_cb' + Date.now();
-            const s  = document.createElement('script');
-            let done = false;
-            window[cb] = d => {
-              done = true;
-              delete window[cb];
-              s.remove();
-              resolve((d && d.rows) ? d.rows : []);
-            };
-            s.onerror = () => { if (!done) { delete window[cb]; s.remove(); resolve([]); } };
-            s.src = APPS_SCRIPT_URL + '?callback=' + cb;
-            setTimeout(() => { if (!done) { delete window[cb]; s.remove(); resolve([]); } }, 10000);
-            document.head.appendChild(s);
-          });
-          console.log('JSONP rows:', rows.length);
-        }
-      }
-
-      /* -- B2: Google Sheets direct CSV (fallback / ถ้ายังไม่มี Apps Script) -- */
-      if (!rows.length) {
-        const csvUrls = [
-          `https://docs.google.com/spreadsheets/d/${FILE_ID}/pub?output=csv`,
-          `https://docs.google.com/spreadsheets/d/${FILE_ID}/gviz/tq?tqx=out:csv`,
-        ];
-        for (const url of csvUrls) {
-          try {
-            const r = await fetch(url);
-            if (!r.ok) continue;
-            const txt = await r.text();
-            if (txt && txt.length > 30 && !txt.includes('<html')) {
-              rows = parseCSV(txt);
-              if (rows.length) { console.log('Loaded CSV from:', url); break; }
-            }
-          } catch {}
-        }
-      }
-
-      /* -- ยังไม่มีข้อมูล → แสดงคำแนะนำ -- */
-      if (!rows.length) {
-        document.getElementById('kpiArea').innerHTML = `
-          <div style="grid-column:1/-1;background:#fff8e1;border:2px solid #ffd08a;border-radius:14px;padding:22px 26px;font-size:13px;line-height:2">
-            <div style="font-size:16px;font-weight:800;color:#b86a00;margin-bottom:8px">⚙️ ต้องตั้งค่า Google Apps Script ก่อน</div>
-            <b>ขั้นตอน (ทำครั้งเดียว ~5 นาที):</b>
-            <ol style="margin:6px 0 0;padding-left:22px;color:#555">
-              <li>เปิด Google Sheet → เมนู <b>Extensions → Apps Script</b></li>
-              <li>ลบโค้ดเดิมทั้งหมด วางโค้ดจากไฟล์ <b>apps_script.gs</b> แทน</li>
-              <li>กด <b>Deploy → New deployment → Web App</b></li>
-              <li>Execute as: <b>Me</b> &nbsp;|&nbsp; Who has access: <b>Anyone</b></li>
-              <li>กด <b>Deploy</b> → Copy URL ที่ได้</li>
-              <li>เปิดไฟล์ <b>index.html</b> ใน GitHub → แก้บรรทัด <code>const APPS_SCRIPT_URL = ''</code> ใส่ URL นั้น</li>
-              <li>Commit → รีเฟรชหน้านี้</li>
-            </ol>
-          </div>`;
-        document.getElementById('daysArea').innerHTML = '';
-        document.getElementById('monthSummaryBody').innerHTML = '<tr><td colspan="7" style="text-align:center;color:#bbb;padding:14px">รอการตั้งค่า</td></tr>';
-        document.getElementById('mainTbody').innerHTML = '<tr><td colspan="9" style="text-align:center;color:#bbb;padding:14px">รอการตั้งค่า</td></tr>';
-        document.getElementById('lastUpdate').textContent = '⚙️ ต้องตั้งค่า Apps Script';
-        return;
-      }
-    }
-
-    // กรองเฉพาะ row ที่มีสถานะ — ยังไม่ระบุสถานะ = ยังไม่ต้องนับ
-    allData = processData(rows.filter(r => (r['สถานะ'] || '').trim() !== ''));
-    populateDropdowns();
-
-    const now = new Date().toLocaleString('th-TH', { dateStyle:'short', timeStyle:'short' });
-    document.getElementById('lastUpdate').textContent =
-      `อัปเดตล่าสุด: ${now} • ทั้งหมด ${allData.length} รายการ`;
-
-    renderMonthSummary();
-    renderPane0();
-    renderPane1();
-
-  } catch (err) {
-    console.error('loadData error:', err);
-    setErr(`⚠️ ${err.message}`);
+  if(!rows.length){
+    try {
+      const res2=await window.cowork.callMcpTool(TOOL_DL,{fileId:FILE_ID,exportMimeType:'text/csv'});
+      console.log('dl raw:',JSON.stringify(res2).slice(0,200));
+      const raw2=extractText(res2); let csvText='';
+      try{csvText=atob(raw2);}catch{csvText=raw2;}
+      if(csvText&&csvText.length>10) rows=parseCSV(csvText);
+      console.log('csv rows:',rows.length);
+    } catch(e2){ console.warn('download failed:',e2.message); }
   }
+
+  if(!rows.length){
+    setStatus('⚠️ โหลดข้อมูลไม่สำเร็จ — กรุณากด Reload');
+    document.getElementById('p1-loading').innerHTML='<div style="color:#ef4444;padding:30px;text-align:center">⚠️ โหลดไม่ได้ กรุณากด Reload</div>';
+    return;
+  }
+  data=rows.map(processRow).filter(Boolean);
+  const now=new Date();
+  setStatus(`อัปเดตล่าสุด ${now.getDate()} ${TM[now.getMonth()]} ${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')} น. (${data.length} รายการ)`);
+  renderP1(); renderP2(); renderP3();
 }
 
 loadData();
-
-/* ====== GLOBAL: avg days chart — called by dropdown onchange ====== */
-function renderAvgDaysChart() {
-  const d = window._avgDays;
-  if (!d) return;
-  const { mMap, months, labels, STAGE_CONFIG, TICK } = d;
-  const sel = document.getElementById('avgStageSelect')?.value || 's1';
-  const cfg = STAGE_CONFIG[sel];
-  const data = months.map(k => {
-    const arr = mMap[k] ? mMap[k][cfg.key] : [];
-    return avg(arr);
-  });
-  const hasData = data.some(v => v !== null && v !== undefined);
-  destroyChart('cAvgDays');
-  if (!hasData) {
-    // Show "no data" message inside chart area
-    const canvas = document.getElementById('cAvgDays');
-    if (canvas) {
-      const ctx = canvas.getContext('2d');
-      canvas.height = 120;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.font = '13px sans-serif';
-      ctx.fillStyle = '#aaa';
-      ctx.textAlign = 'center';
-      ctx.fillText('ไม่มีข้อมูลสำหรับขั้นตอนนี้ (วันที่ยังไม่ได้กรอก)', canvas.width/2, 60);
-    }
-    return;
-  }
-  chartInstances['cAvgDays'] = new Chart(document.getElementById('cAvgDays'), {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        label: cfg.label,
-        data,
-        backgroundColor: cfg.color,
-        borderRadius: 7,
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { display: false },
-        topLabel: { display: true, suffix: ' วัน', fontSize: 12, offset: 5, skipZero: false },
-        tooltip: { callbacks: { label: item => item.raw !== null ? item.raw + ' วัน' : 'ยังไม่มีข้อมูล' } }
-      },
-      scales: {
-        x: { ticks: TIC
+</script>
+</body>
+</html>
