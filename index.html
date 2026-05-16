@@ -1074,7 +1074,37 @@ function switchTab(n,btn){
 }
 
 // ── LOAD DATA ─────────────────────────────────
-const GS_CSV_URL = `https://docs.google.com/spreadsheets/d/${FILE_ID}/export?format=csv`;
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbx8zGctnBw-7hYDdBj8mj8YUh-i5TheVBweTwVTjg-C-DdfEK_cES7nHkxXHZ7mXNg/exec';
+
+// JSONP helper — ใช้ดึงข้อมูลจาก Apps Script โดยไม่ติด CORS
+function fetchJSONP(url) {
+  return new Promise((resolve, reject) => {
+    const cbName = '_cb_' + Date.now();
+    const script = document.createElement('script');
+    const timer = setTimeout(() => {
+      delete window[cbName];
+      script.remove();
+      reject(new Error('JSONP timeout'));
+    }, 15000);
+    window[cbName] = (data) => {
+      clearTimeout(timer);
+      delete window[cbName];
+      script.remove();
+      resolve(data);
+    };
+    script.src = url + '?callback=' + cbName;
+    script.onerror = () => { clearTimeout(timer); delete window[cbName]; script.remove(); reject(new Error('JSONP error')); };
+    document.head.appendChild(script);
+  });
+}
+
+// แปลง row objects (จาก Apps Script JSON) → array of row objects สำหรับ processRow
+function parseGASRows(gasRows) {
+  return gasRows.map(obj => {
+    // Apps Script คืน object {header: value} — ส่งกลับเป็น format เดิม
+    return obj;
+  });
+}
 
 async function loadData() {
   const setStatus=msg=>{document.getElementById('last-update').textContent=msg;};
@@ -1085,33 +1115,7 @@ async function loadData() {
   if(typeof window.cowork !== 'undefined') {
     try {
       const res1=await window.cowork.callMcpTool(TOOL_READ,{fileId:FILE_ID});
-      console.log('read_file raw:',JSON.stringify(res1).slice(0,200));
       const text1=extractText(res1);
       if(text1&&text1.includes('|')) rows=parseMarkdown(text1);
       else if(text1&&text1.includes(',')) rows=parseCSV(text1);
-      console.log('markdown rows:',rows.length);
-    } catch(e1){ console.warn('read_file_content failed:',e1.message); }
-
-    if(!rows.length){
-      try {
-        const res2=await window.cowork.callMcpTool(TOOL_DL,{fileId:FILE_ID,exportMimeType:'text/csv'});
-        console.log('dl raw:',JSON.stringify(res2).slice(0,200));
-        const raw2=extractText(res2); let csvText='';
-        try{csvText=atob(raw2);}catch{csvText=raw2;}
-        if(csvText&&csvText.length>10) rows=parseCSV(csvText);
-        console.log('csv rows:',rows.length);
-      } catch(e2){ console.warn('download failed:',e2.message); }
-    }
-  }
-
-  // ── ทางที่ 2: Direct fetch (GitHub Pages / browser โดยตรง) ──
-  if(!rows.length){
-    try {
-      console.log('Fetching from Google Sheets CSV export...');
-      const resp = await fetch(GS_CSV_URL);
-      if(resp.ok){
-        const csvText = await resp.text();
-        if(csvText && csvText.length > 10) rows = parseCSV(csvText);
-        console.log('direct fetch rows:', rows.length);
-      }
-    } catch(e
+  
